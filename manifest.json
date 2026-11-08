@@ -1,0 +1,37 @@
+{
+  "name": "Mahin — Creative Designer & Video Editor",
+  "short_name": "Mahin",
+  "description": "Visual identities, motion, and digital experiences by Mahin",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#080a10",
+  "theme_color": "#080a10",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>M</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["design", "creative", "portfolio"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "View Work",
+      "short_name": "Work",
+      "description": "Browse selected projects",
+      "url": "./#work",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "Contact",
+      "short_name": "Contact",
+      "description": "Get in touch",
+      "url": "./#contact",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📧</text></svg>", "sizes": "96x96" }]
+    }
+  ]
+}

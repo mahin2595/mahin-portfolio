@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080a10">
+  <meta name="description" content="Mahin — Creative Designer & Video Editor. Visual identities, motion, and digital experiences.">
+  <title>Mahin — Creative Designer & Video Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#080a10">
+  <!-- Mark that JS is available BEFORE first paint. Scroll-reveal styles only
+       hide content when this class is present, so a JS failure can never
+       leave the page blank. -->
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="style.css?v=3">
+  <noscript>
+    <style>
+      .reveal { opacity: 1 !important; transform: none !important; filter: none !important; }
+      .build-corner, .build-rule { opacity: 1 !important; }
+      .typing-caret { display: none !important; }
+    </style>
+  </noscript>
+</head>
+<body>
+  <!-- Custom cursor -->
+  <div class="cursor" id="cursor" aria-hidden="true"></div>
+  <div class="cursor follower" id="cursorFollower" aria-hidden="true"></div>
+
+  <!-- Progress indicator -->
+  <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+
+  <!-- Navigation -->
+  <header class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#home" aria-label="Mahin home">MAHIN<span>.</span></a>
+      <nav class="nav-links" id="navLinks" aria-label="Main navigation">
+        <a href="#about">ABOUT</a>
+        <a href="#work">WORK</a>
+        <a href="#journey">JOURNEY</a>
+        <a href="#contact">CONTACT</a>
+      </nav>
+      <a class="nav-cta magnetic" href="#contact">LET'S TALK ↗</a>
+      <button class="menu-btn" id="menuBtn" aria-label="Open navigation" aria-expanded="false">☰</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO SECTION -->
+    <section class="hero hero-build" id="home">
+      <div class="wrap hero-inner">
+        <div class="hero-orb" aria-hidden="true"></div>
+        
+        <!-- Build corner markers -->
+        <div class="build-corner tl" aria-hidden="true"></div>
+        <div class="build-corner tr" aria-hidden="true"></div>
+        <div class="build-corner bl" aria-hidden="true"></div>
+        <div class="build-corner br" aria-hidden="true"></div>
+
+        <!-- Build lines that draw on scroll -->
+        <div class="build-line build-line-1" aria-hidden="true"></div>
+        <div class="build-line build-line-2" aria-hidden="true"></div>
+        <div class="build-line build-line-3" aria-hidden="true"></div>
+
+        <div class="eyebrow reveal">CREATIVE DESIGNER / VIDEO EDITOR</div>
+        <div class="availability reveal" style="margin-top:22px"><span class="dot"></span> OPEN TO CREATIVE PROJECTS</div>
+        <h1 class="reveal">MAKING<br>IDEAS FEEL<br><span class="gradient">UNREAL.</span><span class="typing-caret"></span></h1>
+        <p class="hero-sub reveal">Hey, I'm Mahin. I create visual identities, cinematic edits, and digital experiences that turn a good idea into something people remember.</p>
+        
+        <div class="hero-actions reveal">
+          <a class="btn primary magnetic" href="#work">Explore my work <span class="arrow">↘</span></a>
+          <a class="btn magnetic" href="#contact">Let's create together <span class="arrow">↗</span></a>
+        </div>
+
+        <!-- Hero stats with counter animation -->
+        <div class="hero-stats reveal">
+          <div class="stat"><strong data-count="3">0</strong><span>Years Creating</span></div>
+          <div class="stat"><strong data-count="50">0</strong><span>Projects Delivered</span></div>
+          <div class="stat"><strong data-count="12">0</strong><span>Happy Clients</span></div>
+          <div class="stat"><strong data-count="200">0</strong><span>Videos Edited</span></div>
+        </div>
+
+        <div class="hero-bottom reveal"><span>INDEPENDENT CREATIVE</span><span>DESIGN · MOTION · STORY</span><span class="scroll-cue"><i></i> SCROLL TO EXPLORE</span></div>
+      </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="about">
+      <div class="wrap">
+        <div class="section-head reveal"><div><div class="eyebrow">01 / THE CREATIVE</div><h2>A mind for<br>the details.</h2></div><p class="section-note">Thoughtful visuals. Intentional motion. A little bit of magic in the details.</p></div>
+        <div class="build-rule reveal"></div>
+        
+        <div class="about-grid">
+          <div class="glass-panel about-copy reveal">
+            <!-- Building card frame -->
+            <div class="card-frame" aria-hidden="true">
+              <div class="card-corner tl"></div>
+              <div class="card-corner tr"></div>
+              <div class="card-corner bl"></div>
+              <div class="card-corner br"></div>
+              <div class="card-edge top"></div>
+              <div class="card-edge right"></div>
+              <div class="card-edge bottom"></div>
+              <div class="card-edge left"></div>
+            </div>
+            
+            <p class="about-big">I'm <em>Mahin</em> — a creative designer and video editor focused on visuals that make people <em>feel something.</em></p>
+            <p class="about-detail">From shaping a visual identity to editing a story frame by frame, I enjoy turning raw ideas into polished creative work. My approach combines clean design, strong composition, rhythm, and a constant curiosity to try something new.</p>
+            <p class="about-detail">This is your space to tell your story. Add your background, creative philosophy, and the kind of clients or projects you want to attract.</p>
+          </div>
+          
+          <div class="glass-panel about-side reveal">
+            <div>
+              <div class="mono">CREATIVE TOOLKIT</div>
+              <div class="skills" id="skillsContainer">
+                <span class="chip">VIDEO EDITING</span>
+                <span class="chip">AMV EDITING</span>
+                <span class="chip">VISUAL DESIGN</span>
+                <span class="chip">AI ART</span>
+                <span class="chip">MOTION GRAPHICS</span>
+                <span class="chip">BRANDING</span>
+                <span class="chip">COLOR GRADING</span>
+                <span class="chip">STORYTELLING</span>
+              </div>
+            </div>
+            <div>
+              <div class="mono">A FEW NUMBERS</div>
+              <div class="stat-grid">
+                <div class="stat"><strong data-count="3">0</strong><span>Years Creating</span></div>
+                <div class="stat"><strong data-count="50">0</strong><span>Projects Delivered</span></div>
+                <div class="stat"><strong data-count="12">0</strong><span>Happy Clients</span></div>
+                <div class="stat"><strong data-count="200">0</strong><span>Videos Edited</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORK SECTION -->
+    <section id="work">
+      <div class="wrap">
+        <div class="section-head reveal"><div><div class="eyebrow">02 / SELECTED WORK</div><h2>Made with<br>intention.</h2></div><p class="section-note">A preview of the kind of creative work that belongs here. Replace these concept tiles with your real project images and links.</p></div>
+        <div class="build-rule reveal"></div>
+        
+        <div class="work-header reveal">
+          <div class="filter-btns" role="tablist" aria-label="Project filters">
+            <button class="filter-btn active magnetic" data-filter="all" role="tab" aria-selected="true">All</button>
+            <button class="filter-btn magnetic" data-filter="design" role="tab" aria-selected="false">Design</button>
+            <button class="filter-btn magnetic" data-filter="video" role="tab" aria-selected="false">Video</button>
+            <button class="filter-btn magnetic" data-filter="motion" role="tab" aria-selected="false">Motion</button>
+            <button class="filter-btn magnetic" data-filter="ai" role="tab" aria-selected="false">AI Art</button>
+          </div>
+        </div>
+        
+        <div class="work-grid" id="workGrid">
+          <article class="glass-panel project reveal" data-category="design">
+            <div class="project-art">
+              <span class="art-index">PROJECT / 001</span>
+              <div class="art-orb"></div>
+              <span class="art-caption">VISUAL IDENTITY STUDY</span>
+            </div>
+            <div class="project-info">
+              <div class="project-top"><h3>Visual Identity</h3><span class="project-arrow">↗</span></div>
+              <p>A visual direction built around a clear concept, confident typography, and a memorable look.</p>
+              <div class="project-tags"><span>Graphic design</span><span>·</span><span>Branding</span></div>
+            </div>
+          </article>
+          
+          <article class="glass-panel project reveal" data-category="video">
+            <div class="project-art">
+              <span class="art-index">PROJECT / 002</span>
+              <div class="art-orb"></div>
+              <span class="art-caption">CINEMATIC VIDEO EDIT</span>
+            </div>
+            <div class="project-info">
+              <div class="project-top"><h3>Cinematic Editing</h3><span class="project-arrow">↗</span></div>
+              <p>A rhythm-led edit combining pacing, sound, transitions, and color to create atmosphere.</p>
+              <div class="project-tags"><span>Video editing</span><span>·</span><span>Color</span></div>
+            </div>
+          </article>
+          
+          <article class="glass-panel project reveal" data-category="motion">
+            <div class="project-art">
+              <span class="art-index">PROJECT / 003</span>
+              <div class="art-orb"></div>
+              <span class="art-caption">AMV / MOTION EXPERIMENT</span>
+            </div>
+            <div class="project-info">
+              <div class="project-top"><h3>AMV & Motion</h3><span class="project-arrow">↗</span></div>
+              <p>An expressive motion experiment built around impact frames, transitions, and music.</p>
+              <div class="project-tags"><span>AMV</span><span>·</span><span>Motion design</span></div>
+            </div>
+          </article>
+          
+          <article class="glass-panel project reveal" data-category="ai">
+            <div class="project-art">
+              <span class="art-index">PROJECT / 004</span>
+              <div class="art-orb"></div>
+              <span class="art-caption">AI-ASSISTED ART DIRECTION</span>
+            </div>
+            <div class="project-info">
+              <div class="project-top"><h3>AI Visual Concepts</h3><span class="project-arrow">↗</span></div>
+              <p>Exploring image-making, art direction, and visual storytelling through AI-assisted workflows.</p>
+              <div class="project-tags"><span>AI art</span><span>·</span><span>Art direction</span></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOURNEY/PROCESS SECTION -->
+    <section id="journey">
+      <div class="wrap">
+        <div class="section-head reveal"><div><div class="eyebrow">03 / THE PROCESS</div><h2>Always<br>in progress.</h2></div><p class="section-note">A simple creative workflow. Edit these steps to reflect how you actually work.</p></div>
+        <div class="build-rule reveal"></div>
+        
+        <div class="glass-panel timeline">
+          <div class="timeline-item reveal">
+            <div class="timeline-date">01 / DISCOVER</div>
+            <div>
+              <h3>Understand the idea</h3>
+              <p>Get clear on the goal, audience, references, mood, and message before opening the editing timeline or design canvas.</p>
+            </div>
+            <div class="timeline-marker" aria-hidden="true"></div>
+          </div>
+          
+          <div class="timeline-item reveal">
+            <div class="timeline-date">02 / EXPLORE</div>
+            <div>
+              <h3>Find the visual direction</h3>
+              <p>Experiment with composition, typography, color, pacing, and visual references until the concept feels right.</p>
+            </div>
+            <div class="timeline-marker" aria-hidden="true"></div>
+          </div>
+          
+          <div class="timeline-item reveal">
+            <div class="timeline-date">03 / CREATE</div>
+            <div>
+              <h3>Make every detail count</h3>
+              <p>Build, edit, refine, and polish the work while keeping the original idea at the center.</p>
+            </div>
+            <div class="timeline-marker" aria-hidden="true"></div>
+          </div>
+          
+          <div class="timeline-item reveal">
+            <div class="timeline-date">04 / DELIVER</div>
+            <div>
+              <h3>Share something memorable</h3>
+              <p>Prepare the final work for the right platform and make sure it looks and feels intentional everywhere.</p>
+            </div>
+            <div class="timeline-marker" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <section id="contact">
+      <div class="wrap">
+        <div class="glass-panel contact reveal">
+          <div class="eyebrow">04 / LET'S CONNECT</div>
+          <h2>Have an idea?<br><span class="gradient">Let's make it move.</span></h2>
+          
+          <form class="contact-form" id="contactForm" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="name">Name</label>
+              <div class="input-wrapper">
+                <input type="text" class="form-input" id="name" name="name" placeholder="Your name" required>
+                <span class="input-border"></span>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="email">Email</label>
+              <div class="input-wrapper">
+                <input type="email" class="form-input" id="email" name="email" placeholder="you@example.com" required>
+                <span class="input-border"></span>
+              </div>
+            </div>
+            
+            <div class="form-group full">
+              <label class="form-label" for="project">Project Type</label>
+              <div class="input-wrapper">
+                <select class="form-input" id="project" name="project" required>
+                  <option value="">Select project type</option>
+                  <option value="design">Visual Design / Branding</option>
+                  <option value="video">Video Editing / Color Grading</option>
+                  <option value="motion">Motion Graphics / AMV</option>
+                  <option value="ai">AI Art Direction</option>
+                  <option value="other">Other</option>
+                </select>
+                <span class="input-border"></span>
+              </div>
+            </div>
+            
+            <div class="form-group full">
+              <label class="form-label" for="message">Message</label>
+              <div class="input-wrapper">
+                <textarea class="form-textarea" id="message" name="message" placeholder="Tell me about your project..." required></textarea>
+                <span class="input-border"></span>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn primary magnetic form-submit">Send Message <span class="arrow">↗</span></button>
+          </form>
+          
+          <div class="contact-bottom">
+            <div>
+              <p class="section-note">Have a video to bring to life, a visual identity to build, or a creative idea to explore? Let's talk.</p>
+              <a class="contact-email" href="mailto:hello@mahin.design">hello@mahin.design ↗</a>
+            </div>
+            <a class="btn primary magnetic" href="mailto:hello@mahin.design">Start a project <span class="arrow">↗</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© <span id="year"></span> MAHIN — MADE WITH INTENTION</span>
+      <a href="#home">BACK TO TOP ↑</a>
+      <span>DESIGN · EDIT · REPEAT</span>
+    </div>
+  </footer>
+
+  <script src="script.js?v=3"></script>
+  <script>
+    // Safety net: if the external script never initialises, un-hide content.
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        if (!window.__mahinReady) {
+          document.documentElement.classList.remove('js');
+        }
+      }, 1200);
+    });
+  </script>
+</body>
+</html>
