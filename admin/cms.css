@@ -528,6 +528,27 @@
   color: var(--a-muted);
 }
 .cms-hint strong { color: var(--a-text); }
+.cms-hint.bad { border-left-color: var(--a-red, #ff5c5c); color: var(--a-red, #ff5c5c); }
+
+/* Connection check rows */
+.cms-head-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cms-conn { margin-top: 14px; display: grid; gap: 8px; }
+.cms-conn-row {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 2px 10px;
+  align-items: baseline;
+  padding: 9px 12px;
+  border-radius: var(--a-radius-sm);
+  border: 1px solid var(--a-stroke);
+  background: var(--a-field);
+  font-size: 12px;
+}
+.cms-conn-mark { font-weight: 800; color: var(--a-muted); }
+.cms-conn-row.ok .cms-conn-mark { color: var(--a-lime, #7cfc9e); }
+.cms-conn-row.bad .cms-conn-mark { color: var(--a-red, #ff5c5c); }
+.cms-conn-label { color: var(--a-text); font-weight: 600; }
+.cms-conn-note { grid-column: 2; color: var(--a-muted); font-size: 11px; line-height: 1.5; }
 
 /* ------------------------------------------------------------
    RESPONSIVE

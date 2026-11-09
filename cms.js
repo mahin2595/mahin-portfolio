@@ -765,6 +765,128 @@
   }
 
   /* ----------------------------------------------------------
+     CONNECTIVITY DIAGNOSTICS
+     ----------------------------------------------------------
+     Live probe used by the admin dashboard's "Run live check".
+     Each check resolves to { id, label, ok, note }. Never throws:
+     failures are reported as checks with ok:false so the dashboard
+     can render exactly what is missing (table, bucket, auth...).
+     ---------------------------------------------------------- */
+  function probeAuth(client) {
+    if (!client.auth || typeof client.auth.getSession !== 'function') {
+      return Promise.resolve({
+        id: 'auth',
+        label: 'Supabase Auth',
+        ok: !!(client && client.auth),
+        note: (client && client.auth)
+          ? 'Auth helper not available on this client.'
+          : 'Client has no auth API.'
+      });
+    }
+    return Promise.resolve(client.auth.getSession()).then(function (res) {
+      return {
+        id: 'auth',
+        label: 'Supabase Auth',
+        ok: !res || !res.error,
+        note: (res && res.error) ? message(res.error) : 'Auth endpoint answered.'
+      };
+    }).catch(function (err) {
+      return { id: 'auth', label: 'Supabase Auth', ok: false, note: prettyError(err, 'Auth check') };
+    });
+  }
+
+  function probeTable(client, tableName) {
+    return Promise.resolve(client.from(tableName).select('id').limit(1)).then(function (res) {
+      if (!res || !res.error) {
+        return { id: 'table-' + tableName, label: 'Table "' + tableName + '"', ok: true, note: 'exists and readable' };
+      }
+      var note = message(res.error);
+      var missing = /could not find the table|PGRST205/i.test(note);
+      return {
+        id: 'table-' + tableName,
+        label: 'Table "' + tableName + '"',
+        ok: false,
+        note: missing ? 'Missing — run supabase/schema.sql' : note
+      };
+    }).catch(function (err) {
+      return { id: 'table-' + tableName, label: 'Table "' + tableName + '"', ok: false, note: prettyError(err, 'Table check') };
+    });
+  }
+
+  function probeBucket(client) {
+    var name = bucket();
+    var storage = client && client.storage;
+    if (!storage) {
+      return Promise.resolve({
+        id: 'bucket-' + name, label: 'Storage bucket "' + name + '"', ok: false,
+        note: 'Storage API unavailable on this client.'
+      });
+    }
+    if (typeof storage.getBucket !== 'function') {
+      // Older SDK slice without getBucket: fall back to listing the folder root.
+      return Promise.resolve(storage.from(name).list('', { limit: 1 })).then(function (res) {
+        return {
+          id: 'bucket-' + name,
+          label: 'Storage bucket "' + name + '"',
+          ok: !res || !res.error,
+          note: (res && res.error) ? message(res.error) : 'listable'
+        };
+      }).catch(function (err) {
+        return { id: 'bucket-' + name, label: 'Storage bucket "' + name + '"', ok: false, note: prettyError(err, 'Bucket check') };
+      });
+    }
+    return Promise.resolve(storage.getBucket(name)).then(function (res) {
+      if (!res || !res.error) {
+        return { id: 'bucket-' + name, label: 'Storage bucket "' + name + '"', ok: true, note: 'exists' };
+      }
+      var note = message(res.error);
+      var missing = /not found|NoSuchBucket/i.test(note);
+      return {
+        id: 'bucket-' + name,
+        label: 'Storage bucket "' + name + '"',
+        ok: false,
+        note: missing ? 'Missing — supabase/schema.sql creates it' : note
+      };
+    }).catch(function (err) {
+      return { id: 'bucket-' + name, label: 'Storage bucket "' + name + '"', ok: false, note: prettyError(err, 'Bucket check') };
+    });
+  }
+
+  /** Live connectivity check for the admin dashboard. Never throws. */
+  function checkConnection(injected) {
+    return resolve().then(function (client) {
+      var use = injected || client;
+      if (!use) {
+        return {
+          data: {
+            configured: false,
+            checks: [{
+              id: 'configured', label: 'Supabase configuration', ok: false,
+              note: 'URL and publishable key are not set. Open supabase.config.js and fill in your project details.'
+            }]
+          },
+          error: null
+        };
+      }
+      var probes = [probeAuth(use)];
+      ['projects', 'skills', 'socialLinks', 'settings'].forEach(function (key) {
+        probes.push(probeTable(use, table(key)));
+      });
+      probes.push(probeBucket(use));
+      return Promise.all(probes).then(function (checks) {
+        return {
+          data: {
+            configured: true,
+            checks: checks,
+            healthy: checks.every(function (c) { return c.ok; })
+          },
+          error: null
+        };
+      });
+    });
+  }
+
+  /* ----------------------------------------------------------
      TEST / ADVANCED HOOKS
      ---------------------------------------------------------- */
   function setClient(client) { injectedClient = client || null; }
@@ -777,6 +899,7 @@
     setClient: setClient,
     clearClient: clearClient,
     publicUrl: publicUrl,
+    checkConnection: checkConnection,
     // mapping
     mapProjectRow: mapProjectRow,
     mapSkillRow: mapSkillRow,

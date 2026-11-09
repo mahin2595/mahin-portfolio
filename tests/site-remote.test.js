@@ -99,6 +99,11 @@ async function bootSite(opts) {
   if (opts.configured !== false) {
     window.MAHIN_SUPABASE.url = 'https://test.supabase.co';
     window.MAHIN_SUPABASE.publishableKey = 'sb_publishable_test_key_123';
+  } else {
+    // Simulate a fresh/unconfigured project regardless of what
+    // supabase.config.js currently holds (it now ships with real values).
+    window.MAHIN_SUPABASE.url = '';
+    window.MAHIN_SUPABASE.publishableKey = '';
   }
   window.eval(SUPABASE_CLIENT_SRC);
   window.eval(CMS_SRC);

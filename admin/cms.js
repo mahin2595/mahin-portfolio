@@ -678,15 +678,22 @@
     root.appendChild(recent);
 
     var info = h('div', { class: 'a-card' }, [
-      h('div', { class: 'a-card-head' }, [h('h2', { text: 'Connection' })]),
+      h('div', { class: 'a-card-head cms-head-row' }, [
+        h('h2', { text: 'Connection' }),
+        h('button', {
+          class: 'a-btn tiny ghost', type: 'button', text: 'Run live check',
+          id: 'cmsRunConnCheck', onClick: runConnectionCheck
+        })
+      ]),
       h('div', { class: 'a-card-body' }, [
         h('dl', { class: 'cms-kv' }, [
           kvRow('Signed in as', (state.user && state.user.email) || '—'),
-          kvRow('Project', (CMS.isConfigured() ? (SB && SB.getConfig().url) : 'Not configured')),
-          kvRow('Storage bucket', (SB && SB.getConfig().bucket) || 'portfolio-media'),
-          kvRow('Table prefix', 'projects · skills · social_links · site_settings')
+          kvRow('Project', (CMS.isConfigured() ? (SB && SB.getConfig().url) : 'Not configured'))
         ]),
-        h('p', { class: 'cms-hint', style: { marginTop: '16px', marginBottom: '0' } }, [
+        h('div', { class: 'cms-conn', id: 'cmsConnResults', 'aria-live': 'polite' }, [
+          h('p', { class: 'cms-hint', text: 'Verify the tables, storage bucket and auth endpoint of your live Supabase project before relying on it.' })
+        ]),
+        h('p', { class: 'cms-hint', style: { marginTop: '12px', marginBottom: '0' } }, [
           h('strong', { text: 'Authorization is enforced by Supabase RLS. ' }),
           document.createTextNode('The dashboard is a convenience layer only. Public visitors can read published rows; only a signed-in administrator can write.')
         ])
@@ -695,6 +702,68 @@
     root.appendChild(info);
 
     if (!state.mediaItems && CMS.isConfigured()) loadMedia(true);
+  }
+
+  function connRow(check) {
+    return h('div', { class: 'cms-conn-row ' + (check.ok ? 'ok' : 'bad') }, [
+      h('span', { class: 'cms-conn-mark', 'aria-hidden': 'true', text: check.ok ? '✓' : '✗' }),
+      h('span', { class: 'cms-conn-label', text: check.label }),
+      h('span', { class: 'cms-conn-note', text: check.note })
+    ]);
+  }
+
+  function renderConnChecks(area, checks, error) {
+    clear(area);
+    if (error) area.appendChild(h('p', { class: 'cms-hint bad', text: error }));
+    if (!checks || !checks.length) {
+      area.appendChild(h('p', { class: 'cms-hint', text: 'No checks returned.' }));
+      return;
+    }
+    checks.forEach(function (c) { area.appendChild(connRow(c)); });
+  }
+
+  /** Browser-only probe: is public sign-up left enabled? (fetch may be absent in tests.) */
+  function probeSignupPolicy() {
+    var cfg = SB && SB.getConfig ? SB.getConfig() : {};
+    if (typeof fetch !== 'function' || !cfg.url || !cfg.publishableKey) {
+      return Promise.resolve(null);
+    }
+    return fetch(cfg.url + '/auth/v1/settings', {
+      headers: { apikey: cfg.publishableKey, Authorization: 'Bearer ' + cfg.publishableKey }
+    }).then(function (res) {
+      return res.ok ? res.json() : null;
+    }).then(function (body) {
+      if (!body || typeof body.disable_signup !== 'boolean') return null;
+      return {
+        ok: body.disable_signup,
+        label: 'Public sign-ups',
+        note: body.disable_signup
+          ? 'disabled — recommended'
+          : 'ENABLED — turn off in Authentication → Sign In / Up'
+      };
+    }).catch(function () { return null; });
+  }
+
+  function runConnectionCheck() {
+    var btn = document.getElementById('cmsRunConnCheck');
+    var area = document.getElementById('cmsConnResults');
+    if (!area) return;
+    var previous = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+    clear(area);
+    area.appendChild(h('p', { class: 'cms-hint', text: 'Contacting ' + (SB && SB.getConfig ? SB.getConfig().url : 'your project') + ' …' }));
+    CMS.checkConnection().then(function (res) {
+      var checks = (res && res.data && res.data.checks) || [];
+      var error = res && res.error;
+      return probeSignupPolicy().then(function (extra) {
+        if (extra) checks = checks.concat([extra]);
+        renderConnChecks(area, checks, error);
+      });
+    }).catch(function (err) {
+      renderConnChecks(area, [], (err && err.message) || String(err));
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = previous; }
+    });
   }
 
   function quickAction(title, sub, onClick) {

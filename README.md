@@ -72,7 +72,12 @@ The script is written to adopt an existing schema: it uses `create table if not 
 
 ### 3.3 Connect the site — the only edit you make
 
-Open **`supabase.config.js`** and replace two placeholders:
+> ✅ **Status on this machine: already done.** `supabase.config.js` ships with the real
+> project URL and publishable key for `ijxiygxqdtleurspiacs.supabase.co` (see §3.5 for
+> the live verification of that project). If you clone the repo to a new machine or want
+> to point it at a different project, repeat the steps below.
+
+Open **`supabase.config.js`** and set (if not already set):
 
 ```js
 url: 'https://YOUR-PROJECT-REF.supabase.co',
@@ -88,11 +93,39 @@ Find them in Supabase under **Project Settings → API**:
 
 > ⚠️ **Never put the `service_role` / secret key here.** It bypasses RLS and would be readable by every visitor. Only the publishable/anon key belongs in a static site; RLS decides what it may do.
 
-While the placeholders remain, `supabase-client.js` detects them and skips Supabase entirely — the page renders its local default content with no errors.
+Until real values are present (empty URL/key), `supabase-client.js` skips Supabase entirely — the page renders its local default content with no errors.
 
-### 3.4 Verify
+### 3.4 Verify from the dashboard
 
-Open `/admin/` and sign in. The topbar status pill shows **Connected** when the SDK loaded and your session is valid; it turns to a warning state with a readable error if the URL/key are wrong or a table is missing. To test the public side, publish a project and reload the site in a private window.
+Open `/admin/` and sign in. The topbar status pill shows **Connected** when the SDK loaded and your session is valid.
+
+On the **Dashboard → Connection** card press **Run live check**. It probes your live project and renders one row per requirement, with an ✗ and a concrete hint for anything missing:
+
+- **Supabase Auth** — reachable endpoint (GoTrue).
+- **Table `projects` / `skills` / `social_links` / `site_settings`** — exists and readable; a missing table gets the hint *"Missing — run supabase/schema.sql"*.
+- **Storage bucket `portfolio-media`** — exists; a missing bucket gets *"Missing — supabase/schema.sql creates it"*.
+- **Public sign-ups** *(browser only)* — warns if `disable_signup` is false.
+
+The page itself degrades gracefully: if a table is missing, the public site keeps its local fallback content and shows a "live content unavailable" pill instead of a blank page.
+
+### 3.5 Live verification of the configured project (2025-11)
+
+Probed `https://ijxiygxqdtleurspiacs.supabase.co` with the publishable key over the
+public REST/Auth/Storage endpoints:
+
+| Check | Result |
+|-------|--------|
+| Publishable key validity | ✅ valid — Auth health `v2.197.0`, `/auth/v1/settings` and the password-grant endpoint all answered |
+| Email/password login path | ✅ live (returns `invalid_credentials` for a bad login — the endpoint works) |
+| Tables `projects`, `skills`, `social_links`, `site_settings` | ❌ **not present** — PostgREST returns `PGRST205 "Could not find the table"` in the `public` schema (and in `core`/`app`/`cms`) |
+| Storage bucket `portfolio-media` | ❌ **not found** — `GET /storage/v1/bucket/portfolio-media` → 404 `NoSuchBucket` |
+| Public sign-ups | ⚠️ **currently ENABLED** — `disable_signup: false` |
+
+**What to do (still required on your side):**
+1. Supabase → **SQL Editor** → run `supabase/schema.sql`, then `supabase/seed.sql` (optional). This creates the four tables, RLS policies and the `portfolio-media` bucket. If you believe the tables *are* set up, double-check you're looking at this project (`ijxiygxqdtleurspiacs`) — the probes found no tables in it.
+2. Supabase → **Authentication → Sign In / Up** → turn **OFF "Allow new users to sign up"** (it is currently on; leaving it on lets anyone register, though RLS still blocks any writes their account could make).
+3. Create your admin under **Authentication → Users → Add user** if you haven't already.
+4. Re-open `/admin/`, sign in, and press **Run live check** — all rows should turn green.
 
 ---
 
@@ -200,19 +233,21 @@ npm install     # dev-only: jsdom
 npm test
 ```
 
-**65 tests, all passing.** With `node --test`, the runner discovers `tests/*.test.js`.
+**71 tests, all passing.** With `node --test`, the runner discovers `tests/*.test.js`.
 
 | Suite | Tests | Covers |
 |-------|-------|--------|
 | `config.test.js` | 10 | normalisation/clamping, unsafe-URL stripping *and reporting*, export/import round-trips, invalid-import rejection, memory persistence, asset resolution, safe DOM-free theme calls |
-| `cms.test.js` | 17 | row ↔ config mapping, published-only filtering, project/skill/social CRUD, settings upsert+merge, image validation, upload/replace, **reference-safe delete**, schema-mismatch messaging, nested public URLs |
+| `cms.test.js` | 21 | row ↔ config mapping, published-only filtering, project/skill/social CRUD, settings upsert+merge, image validation, upload/replace, **reference-safe delete**, schema-mismatch messaging, nested public URLs, **live `checkConnection()` diagnostics (healthy / missing table / missing bucket / unconfigured)** |
 | `admin.test.js` | 15 | local editor: boot/nav/dashboard, drawer + Escape, project CRUD with confirmation, autosave + refresh, appearance swatch, light/dark persistence, live preview, valid/invalid uploads, cross-panel search, reset, import validation, reduced motion |
-| `admin-cms.test.js` | 13 | `/admin/` dashboard: signed-out gate, login/logout, session restore, project create/edit/delete, publish toggle, skills/social CRUD, settings save, media upload/delete guard, error + toast paths |
+| `admin-cms.test.js` | 15 | `/admin/` dashboard: signed-out gate, login/logout, session restore, project create/edit/delete, publish toggle, skills/social CRUD, settings save, media upload/delete guard, error + toast paths, **dashboard "Run live check" (healthy and broken project)** |
 | `site.test.js` | 6 | public hydration from config, theme variables, hidden empty avatar, social row, live-preview re-render + theme switch, reduced-motion reveal |
 | `site-remote.test.js` | 4 | public site with a mock Supabase: published-only rendering, fallback when Supabase fails, no fetch when unconfigured, live content applied without reload |
 
 ### What is *not* verified here
-There is no live Supabase project or credentials in the development environment, so the tests run against a **spec-accurate mock client** that mirrors supabase-js v2 (`from/select/insert/update/delete/eq/order/single`, `storage.from().upload/getPublicUrl/remove`, `auth.*`). The adapter and UI logic are exercised end-to-end, but **live login, live upload and real RLS enforcement have not been verified by me** — you must run the checklist below against your own project.
+The automated suite runs against a **spec-accurate mock client** that mirrors supabase-js v2 (`from/select/insert/update/delete/eq/order/single`, `storage.from().upload/getPublicUrl/remove`, `auth.*`) — no network, no real project.
+
+Beyond the suite, the **real project was probed live** (see §3.5): the publishable key is valid and the Auth endpoints respond. Still **not** verified live (blocked by the missing tables described in §3.5): signing in as *your* admin user, real CRUD round-trips against Postgres, real uploads to `portfolio-media`, and RLS enforcement during those actions. Run schema.sql/seed.sql first (and disable sign-ups), then work through the checklist below — the dashboard's **Run live check** shows green once the database side is ready.
 
 ### Manual checklist against your real project
 1. Sign in at `/admin/`; refresh the page — you stay signed in.

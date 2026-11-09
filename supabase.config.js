@@ -21,13 +21,13 @@
 
   var config = {
     /* ------------------------------------------------------------------
-       1. YOUR SUPABASE PROJECT
+       1. YOUR SUPABASE PROJECT  (✓ CONFIGURED — real values inserted)
        ------------------------------------------------------------------ */
-    // Example: 'https://abcdefghijklmnop.supabase.co'
-    url: 'https://YOUR-PROJECT-REF.supabase.co',
+    // Your live project. Replace only if you move to a different project.
+    url: 'https://ijxiygxqdtleurspiacs.supabase.co',
 
-    // Example: 'sb_publishable_AbCdEf123...'  (or the legacy 'eyJ...' anon key)
-    publishableKey: 'sb_publishable_REPLACE_WITH_YOUR_PUBLISHABLE_KEY',
+    // Your publishable (anon) key. Never put a service_role / secret key here.
+    publishableKey: 'sb_publishable_P5-f3C30skHTO4M2iNm09Q_q-qcpCi5',
 
     /* ------------------------------------------------------------------
        2. WHERE THINGS LIVE IN SUPABASE

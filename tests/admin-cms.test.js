@@ -103,7 +103,8 @@ async function bootAdmin(opts) {
     objects: opts.objects || [{ path: 'projects/used.png', type: 'image/png', size: 100 }],
     users: [{ email: 'admin@example.com', password: 'correct-horse' }],
     session: opts.session || null,
-    faults: opts.faults || {}
+    faults: opts.faults || {},
+    buckets: opts.buckets
   });
   window.MahinCMS.setClient(client);
   window.eval(ADMIN_CMS_SRC);
@@ -388,5 +389,44 @@ test('the recovery form validates matching passwords', async () => {
   doc.getElementById('resetForm').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(20);
   assert.ok(doc.getElementById('authNotice').textContent.match(/do not match/i));
+  window.close();
+});
+
+test('dashboard runs the live connection check and renders every probe', async () => {
+  const { window } = await bootAdmin();
+  await signIn(window);
+  const doc = window.document;
+
+  const btn = doc.getElementById('cmsRunConnCheck');
+  assert.ok(btn, 'Run live check button exists on the dashboard');
+  btn.click();
+  await sleep(150);
+
+  const rows = doc.querySelectorAll('#cmsConnResults .cms-conn-row');
+  assert.ok(rows.length >= 6, 'expected auth + 4 tables + bucket probes, got ' + rows.length);
+  let allOk = true;
+  rows.forEach((r) => { if (r.className.indexOf('ok') === -1) allOk = false; });
+  assert.strictEqual(allOk, true, 'healthy mock reports every check as ok');
+  const text = doc.getElementById('cmsConnResults').textContent;
+  assert.ok(text.indexOf('projects') !== -1 && text.indexOf('site_settings') !== -1, text);
+  window.close();
+});
+
+test('the connection check shows failures for a broken project', async () => {
+  const { window } = await bootAdmin({
+    session: { user: { email: 'admin@example.com' } },
+    faults: { skills: 'Could not find the table public.skills in the schema cache' },
+    buckets: []
+  });
+  await sleep(80);
+  const doc = window.document;
+  doc.getElementById('cmsRunConnCheck').click();
+  await sleep(150);
+
+  const rows = doc.querySelectorAll('#cmsConnResults .cms-conn-row');
+  const bad = Array.from(rows).filter((r) => r.className.indexOf('bad') !== -1);
+  assert.ok(bad.length >= 2, 'table-missing and bucket-missing both flagged, got ' + bad.length);
+  const text = doc.getElementById('cmsConnResults').textContent;
+  assert.ok(/schema\.sql/i.test(text), 'schema hint surfaced');
   window.close();
 });

@@ -186,6 +186,13 @@ function createStorage(client, bucketName) {
           };
         }
       };
+    },
+    getBucket(id) {
+      const exists = (client.__buckets || []).indexOf(id) !== -1;
+      if (!exists) {
+        return Promise.resolve({ data: null, error: { message: 'Bucket not found', statusCode: 404 } });
+      }
+      return Promise.resolve({ data: { id, name: id, public: true }, error: null });
     }
   };
 }
@@ -258,7 +265,8 @@ function createMockClient(seed) {
     __url: seed.url || 'https://test.supabase.co',
     __calls: [],
     __faults: seed.faults || {},
-    __storageFaults: seed.storageFaults || {}
+    __storageFaults: seed.storageFaults || {},
+    __buckets: seed.buckets || ['portfolio-media']
   };
   client.from = (table) => new Query(client, table);
   client.storage = createStorage(client, 'portfolio-media');

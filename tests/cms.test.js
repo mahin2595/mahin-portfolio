@@ -76,8 +76,11 @@ function seedDatabase() {
   };
 }
 
-test('isConfigured is false while supabase.config.js still has placeholders', () => {
+test('isConfigured is false while the project is not configured', () => {
   reset();
+  // Simulate an unconfigured project (empty URL/key) regardless of what
+  // supabase.config.js currently holds.
+  globalThis.MAHIN_SUPABASE = Object.assign({}, BASE_SUPABASE, { url: '', publishableKey: '' });
   assert.strictEqual(cms.isConfigured(), false);
   configure();
   assert.strictEqual(cms.isConfigured(), true);
@@ -349,5 +352,67 @@ test('public URL construction is stable for nested paths', () => {
   );
   assert.strictEqual(cms.publicUrl('https://cdn.test/x.png'), 'https://cdn.test/x.png');
   assert.strictEqual(cms.publicUrl(''), '');
+  reset();
+});
+
+/* ------------------------------------------------------------
+   CONNECTIVITY DIAGNOSTICS (checkConnection)
+   ------------------------------------------------------------ */
+
+test('checkConnection reports all green on a healthy project', async () => {
+  configure();
+  cms.setClient(createMockClient({ database: seedDatabase() }));
+  const res = await cms.checkConnection();
+  assert.strictEqual(res.error, null);
+  assert.strictEqual(res.data.configured, true);
+  assert.strictEqual(res.data.healthy, true);
+  const labels = res.data.checks.map((c) => c.label).join(' | ');
+  assert.ok(labels.indexOf('Table "projects"') !== -1, labels);
+  assert.ok(labels.indexOf('Table "skills"') !== -1, labels);
+  assert.ok(labels.indexOf('Table "social_links"') !== -1, labels);
+  assert.ok(labels.indexOf('Table "site_settings"') !== -1, labels);
+  assert.ok(labels.indexOf('Storage bucket "portfolio-media"') !== -1, labels);
+  assert.ok(labels.indexOf('Supabase Auth') !== -1, labels);
+  res.data.checks.forEach((c) => assert.strictEqual(c.ok, true, c.label + ': ' + c.note));
+  reset();
+});
+
+test('checkConnection flags a missing table with the schema.sql hint', async () => {
+  configure();
+  cms.setClient(createMockClient({
+    database: seedDatabase(),
+    faults: { projects: 'Could not find the table public.projects in the schema cache' }
+  }));
+  const res = await cms.checkConnection();
+  assert.strictEqual(res.data.healthy, false);
+  const table = res.data.checks.find((c) => c.id === 'table-projects');
+  assert.ok(table, 'projects probe present');
+  assert.strictEqual(table.ok, false);
+  assert.ok(table.note.indexOf('schema.sql') !== -1, table.note);
+  reset();
+});
+
+test('checkConnection flags a missing storage bucket', async () => {
+  configure();
+  cms.setClient(createMockClient({ database: seedDatabase(), buckets: [] }));
+  const res = await cms.checkConnection();
+  const bucket = res.data.checks.find((c) => c.id.indexOf('bucket-') === 0);
+  assert.ok(bucket);
+  assert.strictEqual(bucket.ok, false);
+  assert.ok(/not found|Missing/i.test(bucket.note), bucket.note);
+  reset();
+});
+
+test('checkConnection reports unconfigured when no client is available', async () => {
+  // Blank credentials (like a fresh clone before supabase.config.js is filled
+  // in) and clear the injected client: checkConnection must say "not configured".
+  globalThis.MAHIN_SUPABASE = Object.assign({}, BASE_SUPABASE, { url: '', publishableKey: '' });
+  cms.clearClient();
+  const res = await cms.checkConnection();
+  assert.strictEqual(res.error, null);
+  assert.strictEqual(res.data.configured, false);
+  assert.strictEqual(res.data.checks.length, 1);
+  assert.strictEqual(res.data.checks[0].ok, false);
+  assert.ok(res.data.checks[0].note.indexOf('supabase.config.js') !== -1);
   reset();
 });
