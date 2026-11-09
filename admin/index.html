@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en" data-admin-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080a10">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Mahin Studio content management dashboard.">
+  <title>Mahin Studio — CMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Shared config core + Supabase adapter. These load from the repo root. -->
+  <script src="../config.js?v=6"></script>
+  <script src="../supabase.config.js?v=6"></script>
+  <script src="../supabase-client.js?v=6"></script>
+  <script src="../cms.js?v=6"></script>
+
+  <link rel="stylesheet" href="../admin.css?v=6">
+  <link rel="stylesheet" href="./cms.css?v=6">
+</head>
+<body class="admin-body cms-body">
+  <a class="a-skip" href="#cmsMain">Skip to content</a>
+  <div class="a-ambient" aria-hidden="true"></div>
+
+  <!-- ============================================================
+       AUTH SCREEN (shown until a Supabase session exists)
+       ============================================================ -->
+  <div class="cms-auth" id="authScreen">
+    <div class="cms-auth-card">
+      <div class="cms-auth-brand">
+        <span class="a-brand-mark" aria-hidden="true">M</span>
+        <span class="a-brand-text">MAHIN <em>STUDIO</em></span>
+      </div>
+      <p class="cms-auth-kicker">Content Management</p>
+
+      <div class="cms-notice" id="authNotice" role="alert" hidden></div>
+
+      <!-- Sign in -->
+      <form class="cms-form" id="loginForm" novalidate>
+        <h1>Sign in</h1>
+        <p class="cms-auth-sub">Use the administrator account you created in Supabase&nbsp;Auth.</p>
+
+        <div class="a-field">
+          <label class="a-field-label" for="loginEmail">Email<span class="a-req">*</span></label>
+          <input class="a-input" id="loginEmail" name="email" type="email" autocomplete="username" required placeholder="you@example.com">
+        </div>
+        <div class="a-field">
+          <label class="a-field-label" for="loginPassword">Password<span class="a-req">*</span></label>
+          <input class="a-input" id="loginPassword" name="password" type="password" autocomplete="current-password" required placeholder="••••••••">
+        </div>
+
+        <button class="a-btn primary block" type="submit" id="loginSubmit">Sign in</button>
+        <button class="cms-link" type="button" id="forgotLink">Forgot password?</button>
+      </form>
+
+      <!-- Request password reset -->
+      <form class="cms-form" id="forgotForm" novalidate hidden>
+        <h1>Reset password</h1>
+        <p class="cms-auth-sub">We'll email you a recovery link that returns you to this dashboard.</p>
+
+        <div class="a-field">
+          <label class="a-field-label" for="forgotEmail">Email<span class="a-req">*</span></label>
+          <input class="a-input" id="forgotEmail" name="email" type="email" autocomplete="username" required placeholder="you@example.com">
+        </div>
+
+        <button class="a-btn primary block" type="submit" id="forgotSubmit">Send recovery link</button>
+        <button class="cms-link" type="button" data-auth-back>← Back to sign in</button>
+      </form>
+
+      <!-- Set a new password (reached from the recovery email) -->
+      <form class="cms-form" id="resetForm" novalidate hidden>
+        <h1>Choose a new password</h1>
+        <p class="cms-auth-sub">You're signed in from a recovery link. Set a new password to finish.</p>
+
+        <div class="a-field">
+          <label class="a-field-label" for="resetPassword">New password<span class="a-req">*</span></label>
+          <input class="a-input" id="resetPassword" name="password" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters">
+        </div>
+        <div class="a-field">
+          <label class="a-field-label" for="resetConfirm">Confirm password<span class="a-req">*</span></label>
+          <input class="a-input" id="resetConfirm" name="confirm" type="password" autocomplete="new-password" minlength="8" required placeholder="Repeat the password">
+        </div>
+
+        <button class="a-btn primary block" type="submit" id="resetSubmit">Update password</button>
+        <button class="cms-link" type="button" data-auth-back>← Back to sign in</button>
+      </form>
+
+      <p class="cms-auth-foot">
+        <span id="configState" class="cms-config-state"></span>
+        <a href="../index.html">← Back to site</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       DASHBOARD (shown once a session exists)
+       ============================================================ -->
+  <div id="appScreen" hidden>
+    <header class="a-topbar">
+      <button class="a-icon-btn a-drawer-btn" id="cmsDrawerBtn" type="button"
+              aria-label="Open navigation" aria-expanded="false" aria-controls="cmsSidebar">☰</button>
+
+      <a class="a-brand" href="../index.html" title="Open the public site">
+        <span class="a-brand-mark" aria-hidden="true">M</span>
+        <span class="a-brand-text">MAHIN <em>STUDIO</em></span>
+      </a>
+
+      <div class="cms-topbar-spacer"></div>
+
+      <div class="a-status" id="cmsConnection" role="status" aria-live="polite" data-state="ok">
+        <span class="a-status-dot" aria-hidden="true"></span>
+        <span id="cmsConnectionText">Connected</span>
+      </div>
+
+      <div class="a-actions">
+        <span class="cms-account a-hide-sm" id="cmsAccount" title="Signed in"></span>
+        <a class="a-btn ghost a-hide-sm" href="../index.html" target="_blank" rel="noopener">View site ↗</a>
+        <button class="a-btn ghost" id="cmsRefreshBtn" type="button">Refresh</button>
+        <button class="a-icon-btn" id="cmsThemeBtn" type="button" aria-label="Toggle light/dark appearance" title="Toggle appearance">☀</button>
+        <button class="a-btn danger" id="cmsSignOutBtn" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <div class="a-shell">
+      <aside class="a-sidebar" id="cmsSidebar" aria-label="CMS sections">
+        <nav class="a-nav" id="cmsNav"></nav>
+        <div class="a-sidebar-foot">
+          <div class="a-sidebar-note">
+            <strong>Live CMS</strong>
+            <p>Changes save straight to Supabase and appear on the public site immediately.</p>
+          </div>
+          <a class="a-side-link" href="../admin.html">Local editor (offline)</a>
+          <a class="a-side-link" href="../index.html">← Back to portfolio</a>
+        </div>
+      </aside>
+
+      <div class="a-scrim" id="cmsScrim" hidden></div>
+
+      <main class="a-main" id="cmsMain" tabindex="-1">
+        <div id="cmsPanels"></div>
+      </main>
+    </div>
+  </div>
+
+  <div class="a-toasts" id="cmsToasts" role="region" aria-label="Notifications" aria-live="polite"></div>
+
+  <div class="a-modal-root" id="cmsModalRoot" hidden>
+    <div class="a-modal-backdrop" data-close-modal></div>
+    <div class="a-modal" role="dialog" aria-modal="true" aria-labelledby="cmsModalTitle" aria-describedby="cmsModalBody">
+      <h2 id="cmsModalTitle">Confirm</h2>
+      <p id="cmsModalBody"></p>
+      <div class="a-modal-actions">
+        <button class="a-btn ghost" type="button" data-close-modal>Cancel</button>
+        <button class="a-btn danger" type="button" id="cmsModalConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <noscript>
+    <div style="padding:40px;font-family:system-ui;color:#fff;background:#0a0d14;min-height:100vh">
+      The CMS dashboard needs JavaScript. Please enable it, or use the local editor at
+      <a href="../admin.html" style="color:#9be7e4">admin.html</a>.
+    </div>
+  </noscript>
+
+  <script src="./cms.js?v=6"></script>
+</body>
+</html>

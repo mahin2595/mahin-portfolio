@@ -1,8 +1,11 @@
-# Mahin Studio — Portfolio + Admin Control Panel
+# Mahin Studio — Portfolio + Supabase CMS
 
-A premium, Apple-inspired glassmorphism portfolio for **Mahin — Creative Designer / Video Editor**, plus a fully local **Admin Control Panel** for editing every piece of content without touching code.
+A premium, Apple-inspired glassmorphism portfolio for **Mahin — Creative Designer / Video Editor**, with two admin surfaces:
 
-The public site keeps the original design and its "self-building while scrolling" animation, smooth scrolling and mobile-first layout. All editable content now lives in one shared configuration structure instead of being hardcoded across the HTML.
+1. **`/admin/` — the live Supabase CMS.** Real authentication, database-backed content, image uploads, drafts/publishing. Edits go live globally with **no GitHub redeploy**.
+2. **`/admin.html` — the offline local editor.** Edits a config in `localStorage` in your own browser only. Kept as a zero-backend fallback.
+
+The public site keeps the original design and its "self-building while scrolling" animation, smooth scrolling and mobile-first layout. All editable content lives in one shared configuration structure rather than being hardcoded across the HTML.
 
 ---
 
@@ -10,160 +13,226 @@ The public site keeps the original design and its "self-building while scrolling
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Public portfolio. Content falls back to sensible defaults if JS never runs. |
-| `style.css` | Public design system (glass, colours, responsive, animations). |
-| `script.js` | Public interactivity: custom cursor, scroll reveal, self-building hero, smooth scroll, filters, counters, contact form … |
-| `config.js` | **Shared core.** `DEFAULT_CONFIG`, validation/normalisation, `localStorage` load/save, export/import, theme + animation application, asset resolution. Loaded by both the site and the admin. Works in the browser *and* in Node for tests. |
-| `render.js` | Hydrates the public page from the shared config and handles live-preview messages. |
-| `admin.html` | Admin shell (topbar, sidebar/drawer, panels). |
-| `admin.css` | Admin glassmorphism styling (dark + light). |
-| `admin.js` | Admin application: form engine, CRUD, media library, live preview, search, import/export/reset. |
+| `index.html` | Public portfolio. Renders local defaults first, then hydrates from Supabase. Content still shows if JS or Supabase is unavailable. |
+| `style.css` | Public design system (glass, colours, responsive, animations, sync pill). |
+| `script.js` | Public interactivity: custom cursor, scroll reveal, self-building hero, smooth scroll, filters, counters, contact form. |
+| `config.js` | **Shared core.** `DEFAULT_CONFIG`, validation/normalisation, `localStorage` load/save, export/import, theme + animation application, asset resolution. Works in the browser *and* in Node for tests. |
+| `render.js` | Hydrates the public page from the shared config; handles live-preview messages and remote (Supabase) hydration. |
+| `supabase.config.js` | **The only file you edit to connect the CMS** — project URL, publishable key, table/bucket names. Contains **no secrets**. |
+| `supabase-client.js` | Lazily loads `@supabase/supabase-js` v2 (UMD, pinned CDN) and creates one client. `isConfigured()` returns false while placeholders remain, so the site silently uses fallback content. |
+| `cms.js` | Framework-free data adapter shared by the site and dashboard: row ↔ config mapping, published-only reads, project/skill/social CRUD, settings, storage upload/validate, reference-safe delete. The client is injectable for tests. |
+| `admin/index.html` | The protected **`/admin/`** dashboard shell (login, panels, drawer, dialogs, toasts). |
+| `admin/cms.css` | CMS dashboard styling, layered on the shared admin design system. |
+| `admin/cms.js` | Dashboard application: Supabase Auth, projects/skills/social/settings CRUD, media library, publish controls, connection status. |
+| `admin.html` | **Offline local editor** (localStorage). Topbar/sidebar/panels. |
+| `admin.css` | Admin glassmorphism styling (dark + light), shared by both admin surfaces. |
+| `admin.js` | Local editor logic: form engine, CRUD, media library, live preview, search, import/export/reset. |
+| `supabase/schema.sql` | Idempotent tables, indexes, **RLS policies** and the `portfolio-media` bucket + Storage policies. |
+| `supabase/seed.sql` | Optional starter rows (only inserts into empty tables; safe to re-run). |
 | `sw.js` | Service worker (network-first so a stale cache can never pin old assets). |
-| `manifest.json` | PWA manifest. |
-| `tests/` | Automated tests (Node's built-in runner + jsdom). |
+| `manifest.json` | PWA manifest, including an Admin shortcut to `./admin/`. |
+| `tests/` | Automated tests (Node's built-in runner + jsdom + a spec-accurate mock Supabase client). |
 
-No runtime dependencies. No build step. `jsdom` is a **dev-only** dependency used by the tests.
+No runtime dependencies and no build step. `jsdom` is a **dev-only** dependency used by the tests.
 
 ---
 
-## 2. Running it
-
-From this project root:
+## 2. Running it locally
 
 ```bash
-# Option A — plain static server (recommended; needed for the service worker)
+# plain static server (recommended; the service worker and /admin/ directory need it)
 python3 -m http.server 8000
 # then open http://localhost:8000
-
-# Option B — just open index.html in a browser
 ```
 
-Open the admin panel either from the floating **⚙ Admin** button on the site, or directly at:
+- Public site → `http://localhost:8000/`
+- Live CMS → `http://localhost:8000/admin/` *(the trailing slash matters)*
+- Offline editor → `http://localhost:8000/admin.html`
 
-```
-http://localhost:8000/admin.html
-```
-
-> On GitHub Pages the same relative paths work from the repository sub-path.
+Since `/admin/` is a real directory with its own `index.html`, **browser refresh works** on it — there is no client-side router to fall over.
 
 ---
 
-## 3. How the data flows
+## 3. Supabase setup (do this once)
+
+### 3.1 Create the database
+
+In the Supabase dashboard open **SQL Editor** and run, in order:
+
+1. `supabase/schema.sql` — creates/repairs the four tables (`projects`, `skills`, `social_links`, `site_settings`), constraints, indexes, **RLS policies** and the `portfolio-media` bucket with Storage policies. Safe to re-run.
+2. `supabase/seed.sql` *(optional)* — inserts a few starter projects and skill chips only when the tables are still empty.
+
+The script is written to adopt an existing schema: it uses `create table if not exists` plus `add column if not exists` and drops/recreates its own policies, so it will not destroy rows you already have.
+
+### 3.2 Create the administrator
+
+- **Authentication → Users → Add user** — create your admin with email + password and confirm the email.
+- **Authentication → Providers → Email** — leave **"Enable sign ups" off**. Registration is not exposed anywhere in this project, and turning it off means no visitor can create an account even by calling the API directly.
+- Authorization is enforced by RLS in the database, not by the dashboard: every write policy requires an authenticated session.
+
+### 3.3 Connect the site — the only edit you make
+
+Open **`supabase.config.js`** and replace two placeholders:
+
+```js
+url: 'https://YOUR-PROJECT-REF.supabase.co',
+publishableKey: 'sb_publishable_REPLACE_WITH_YOUR_PUBLISHABLE_KEY',
+```
+
+Find them in Supabase under **Project Settings → API**:
+
+| Supabase field | Goes into |
+|----------------|-----------|
+| Project URL | `url` |
+| **Publishable key** (older projects: "anon public" key) | `publishableKey` |
+
+> ⚠️ **Never put the `service_role` / secret key here.** It bypasses RLS and would be readable by every visitor. Only the publishable/anon key belongs in a static site; RLS decides what it may do.
+
+While the placeholders remain, `supabase-client.js` detects them and skips Supabase entirely — the page renders its local default content with no errors.
+
+### 3.4 Verify
+
+Open `/admin/` and sign in. The topbar status pill shows **Connected** when the SDK loaded and your session is valid; it turns to a warning state with a readable error if the URL/key are wrong or a table is missing. To test the public side, publish a project and reload the site in a private window.
+
+---
+
+## 4. How the data flows
 
 ```
-admin.js  ──edits──▶  working config
-   │                        │
-   │ save (debounced)       │ postMessage  { type: 'mahin:preview-config', config }
-   ▼                        ▼
-localStorage          index.html iframe (render.js)
-   │
-   ▼
-config.js load()  ──▶  render.js  ──▶  public page
+┌─ /admin/ (Supabase Auth session) ─┐
+│  admin/cms.js form + CRUD         │
+└───────────────┬───────────────────┘
+                │ supabase-js v2 (publishable key + user JWT)
+                ▼
+        Supabase Postgres + Storage
+                │ RLS: public reads only status='published'
+                ▼
+        cms.js fetchPublicConfig()
+                │
+                ▼
+   index.html → render.js → public page
+        (local defaults render first as fallback)
 ```
 
-`config.js` is the single source of truth. The admin never writes HTML strings for content — everything is rendered with `textContent`, so user-entered text cannot inject markup.
+- The public page never queries drafts: RLS restricts anon reads to `status = 'published'`.
+- `config.js` remains the single shape for content, so the local editor, the CMS and the renderer all speak the same language.
+- The admin never injects HTML strings — content is rendered with `textContent`, keeping user input XSS-safe.
 
 ---
 
-## 4. Admin Control Panel — feature guide
+## 5. `/admin/` dashboard guide
 
-### 4.1 Dashboard (Overview)
-- Live statistics: total projects, total skills, media assets, storage used.
-- **Quick actions**: edit profile, add a project, upload media, appearance, preview site, export backup.
-- **Website preview**: an embedded live iframe. It updates as you edit; **Refresh** reloads it and **Push changes** force-sends the current (even unsaved) config.
-- **Save status** indicator in the topbar: *Saved*, *Unsaved changes*, *Saving…*, *Save failed*.
-- Profile at a glance summary.
+### 5.1 Authentication
+- Email + password login via **Supabase Auth** (no client-side password check).
+- **Session persistence** — the session survives refresh and new tabs (`persistSession` is the SDK default); the dashboard re-checks it on load and restores your view.
+- **Logout** from the topbar.
+- **Password recovery** — "Forgot password?" emails a link (`resetPasswordForEmail`); the link returns to `/admin/`, where you set a new password via `updateUser`.
+- Protected: the dashboard is `hidden` until a session exists; panels are never built or fetched while signed out. This is convenience only — the real gate is RLS.
 
-### 4.2 Profile
-Edit display name, professional title, hero eyebrow, hero heading + accent word, intro, about lead/body, profile image, availability status, statistics and the process timeline. Avatar uploads use the media library.
+### 5.2 Dashboard
+Overview counts (projects, skills, social links, media), profile at a glance, quick actions, connection/session status and a "View site" link.
 
-### 4.3 Projects (full CRUD)
-- **Add / edit / delete** projects with a confirmation dialog on delete.
-- Thumbnail (media library, URL or upload).
-- Title, description, category, tools/software (comma separated).
-- Project URL and video preview URL (validated).
-- **Featured** toggle and an explicit **Order** field, plus ↑/↓ reorder buttons.
-- Search/filter the project list, and manage categories.
+### 5.3 Projects
+- **Create / edit / delete** rows in `projects` (delete asks for confirmation).
+- Thumbnail via URL or upload to `portfolio-media`.
+- Title, description, category, tools (comma separated), project URL, video preview URL.
+- **Featured** toggle and **display order** (`sort_order`) with ↑/↓ reordering.
+- **Draft / Published** controls: `status` is `draft` or `published`; drafts are invisible to visitors and to the public API.
 
-### 4.4 Media library
-- Drag-and-drop or browse to upload **JPG, PNG, WebP**.
-- Validates **file type and size** (2.5 MB per file) and shows an error toast otherwise.
-- Preview, replace and delete images. Deleting warns you which items reference the image.
-- Storage meter shows usage against the safe ceiling.
-- Uploaded images are stored as data URLs and referenced as `media:<id>`, so one upload can be reused everywhere.
+### 5.4 Skills
+Add, edit, reorder and delete rows in `skills`. Each has a name, level/percent or label, and a draft/published status. These populate the **Creative Toolkit** chips.
 
-### 4.5 Skills
-Add, edit, reorder (↑/↓) and delete skills. Duplicates and blanks are rejected. These populate the **Creative Toolkit** chips on the site.
+### 5.5 Social links
+Manage rows in `social_links` (label, URL, icon/platform, visibility, order). URLs are validated before saving.
 
-### 4.6 Appearance
-Background, text, accent (lime slot), secondary (cyan) and tertiary (violet) colours; glass transparency; blur intensity; border radius; card shadow; font family (display/body/mono); font scale; heading scale; light/dark presets. An in-panel **live preview** updates instantly, and the embedded site preview updates on push.
+### 5.6 Profile & site settings
+Edits the `site_settings` JSON sections: `profile` (name, title, hero copy, intro, about, availability, stats, process), `appearance`, `animations`, `seo` and `categories`. Each section is upserted as one row, so a save replaces only that section.
 
-### 4.7 Animations
-Toggle scroll reveal, self-building intro, page transitions, scroll-progress bar, hover effects, parallax orb, magnetic buttons, custom cursor and animated counters. Tune **duration**, **delay** and **stagger**, plus a live replay demo. Reduced-motion is always respected:
-- `system` defers to the visitor's OS setting.
-- `force-off` disables motion for everyone.
+### 5.7 Media library
+- Upload **JPG, PNG, WebP** to the `portfolio-media` bucket (drag-and-drop or browse).
+- **Type and size validation** on the client (5 MB ceiling, matching `supabase.config.js`) — and the bucket's own limits are the real backstop.
+- Preview, **replace** (same extension, stable path), **copy public URL**, and delete.
+- **Delete safety:** before deleting, the adapter lists projects and refuses if any project still references the image. You must detach it first.
+- Organized into `projects/` and `profile/` folders.
 
-### 4.8 Contact & social
-Email address (also used by the "Start a project" button), location/availability line, and Instagram / YouTube / Facebook / Behance / Dribbble links plus unlimited custom links.
-
-### 4.9 SEO
-Website title, meta description, keywords, canonical URL, Twitter/X handle, Open Graph sharing image and favicon. A live Google-style result and social-card preview update as you type.
-
-### 4.10 Data & backup
-- **Save changes now**, **Download backup** (JSON), **Copy JSON**, **Import from file**, **Reset to defaults**.
-- Drag-and-drop JSON import with validation; invalid or unrelated JSON is rejected with a clear message and your data is untouched.
-- **Automatic local saving** happens ~0.9 s after you stop editing (debounced).
-- An **unsaved-changes** guard warns you before closing the tab.
-
-### 4.11 Admin interface
-- Sidebar navigation on desktop, slide-in drawer on mobile with scrim + Escape to close.
-- Global **search** across every setting (panels are built on first search so results are complete).
-- Toast notifications, confirmation dialogs, keyboard focus trapping in dialogs, skip-to-content link, and an admin-only light/dark toggle.
+### 5.8 UX
+Sidebar on desktop, slide-in **drawer** on mobile (scrim + Escape), toasts for success/error, confirmation dialogs with focus trapping, loading indicators on every async action, and a responsive layout down to small phones.
 
 ---
 
-## 5. Security & architecture — read this
+## 6. GitHub Pages deployment
 
-This admin is a **local editing tool**, not a hosted CMS.
-
-- **There is no login.** Adding a client-side PIN or password would be security theatre: anyone can read the JavaScript and open `admin.html`. We deliberately do not pretend otherwise.
-- **`localStorage` is browser- and device-specific.** Your edits are visible only in the browser where you made them. Open the site on another device, in another browser, or in private mode and you will see the defaults. Use **Export/Import** to move content.
-- **Never store private data here.** No secrets, passwords, API keys or sensitive client information — everything saved is readable by anyone with access to the browser.
-- **No credentials in JavaScript.** `config.js` contains no secrets by design.
-- **Admin and public presentation are separate files** (`admin.*` vs `index.*`), and the admin page is marked `noindex`.
-
-### If you need real authentication or global publishing
-`localStorage` cannot do this. Add a backend/CMS with:
-- a real authentication layer (session/JWT, hashed passwords),
-- a database for content,
-- an API the public site reads at load time,
-- optional roles/permissions.
-
-Compatible options include a small Node/Express + PostgreSQL API, Supabase, Firebase, Sanity or another headless CMS. The current admin's form/CRUD code can be pointed at such an API instead of `localStorage` with modest changes, because all content already flows through one central config object.
-
----
-
-## 6. Testing
+Everything is static and uses **relative paths**, so it works from a repo sub-path (`https://user.github.io/repo/`) or a custom domain.
 
 ```bash
-npm install     # installs the dev-only jsdom dependency
+git add -A
+git commit -m "Add Supabase CMS"
+git push
+```
+
+Then **Settings → Pages → Source: Deploy from a branch → `main` / root**.
+
+Because `/admin/` is a directory with an `index.html`, GitHub Pages serves it directly and refreshes resolve normally. If you visit `/admin` without the slash, Pages issues the standard directory redirect. No server routes, rewrites or serverless functions are required.
+
+Published changes appear on the public site **without a redeploy** — the browser fetches from Supabase on load.
+
+---
+
+## 7. Security & architecture — read this
+
+**The Supabase dashboard is genuinely protected; the offline editor is not.**
+
+- **Authorization lives in the database.** RLS policies decide every read and write. Public visitors may read only `status = 'published'` rows; writes require an authenticated user. A visitor editing JavaScript gains nothing.
+- **Only the publishable key ships.** `service_role`/secret keys are never referenced. Grep the repo: the only occurrence of `service_role` is a warning comment.
+- **No public registration.** There is no sign-up UI, and you should keep "Enable sign ups" disabled in Supabase.
+- **localStorage is browser- and device-specific.** The `/admin.html` editor's content is visible only in the browser that made it — not to visitors, not on other devices. Use its Export/Import to move content. A client-side PIN there would be security theatre; we do not pretend otherwise.
+- **Drafts are not a security boundary for secret data** — they are simply excluded from public reads. Don't store client secrets in project fields.
+
+### If you need more
+For multiple editors or roles, add a `profiles`/roles column and scope RLS writes to that role. For scheduled publishing or audit history, add columns/triggers in Postgres. For a fully managed content model, the same `cms.js` adapter boundary lets you swap in another headless CMS without touching the public renderer.
+
+---
+
+## 8. Testing
+
+```bash
+npm install     # dev-only: jsdom
 npm test
 ```
 
-The suite (28 tests) covers:
+**65 tests, all passing.** With `node --test`, the runner discovers `tests/*.test.js`.
 
-- **config.js** — normalisation/clamping, unsafe-URL stripping *and reporting*, export/import round-trips, invalid import rejection, memory persistence, asset resolution, safe DOM-free theme calls.
-- **admin.js (jsdom)** — boot/nav/dashboard, drawer + Escape, project add/edit/persist/delete-with-confirmation, autosave + simulated refresh, appearance live swatch, admin light/dark persistence, live preview messaging, invalid vs valid uploads, cross-panel search, reset-to-defaults, import validation, reduced-motion notice.
-- **public site (jsdom)** — full hydration from config, theme variables, hidden empty avatar, social links, live-preview re-render + theme switch, reduced-motion reveal.
+| Suite | Tests | Covers |
+|-------|-------|--------|
+| `config.test.js` | 10 | normalisation/clamping, unsafe-URL stripping *and reporting*, export/import round-trips, invalid-import rejection, memory persistence, asset resolution, safe DOM-free theme calls |
+| `cms.test.js` | 17 | row ↔ config mapping, published-only filtering, project/skill/social CRUD, settings upsert+merge, image validation, upload/replace, **reference-safe delete**, schema-mismatch messaging, nested public URLs |
+| `admin.test.js` | 15 | local editor: boot/nav/dashboard, drawer + Escape, project CRUD with confirmation, autosave + refresh, appearance swatch, light/dark persistence, live preview, valid/invalid uploads, cross-panel search, reset, import validation, reduced motion |
+| `admin-cms.test.js` | 13 | `/admin/` dashboard: signed-out gate, login/logout, session restore, project create/edit/delete, publish toggle, skills/social CRUD, settings save, media upload/delete guard, error + toast paths |
+| `site.test.js` | 6 | public hydration from config, theme variables, hidden empty avatar, social row, live-preview re-render + theme switch, reduced-motion reveal |
+| `site-remote.test.js` | 4 | public site with a mock Supabase: published-only rendering, fallback when Supabase fails, no fetch when unconfigured, live content applied without reload |
 
-Manual checks worth doing in a real browser: drag-and-drop upload, the self-building scroll animation, smooth scrolling, and the mobile drawer at narrow widths.
+### What is *not* verified here
+There is no live Supabase project or credentials in the development environment, so the tests run against a **spec-accurate mock client** that mirrors supabase-js v2 (`from/select/insert/update/delete/eq/order/single`, `storage.from().upload/getPublicUrl/remove`, `auth.*`). The adapter and UI logic are exercised end-to-end, but **live login, live upload and real RLS enforcement have not been verified by me** — you must run the checklist below against your own project.
+
+### Manual checklist against your real project
+1. Sign in at `/admin/`; refresh the page — you stay signed in.
+2. Create a **draft** project → confirm it does **not** appear publicly; switch to published → it appears after a reload.
+3. Edit and delete (confirm the dialog appears).
+4. Upload a JPG/PNG/WebP, copy its URL, replace it, then try to delete it while a project uses it (should refuse).
+5. Upload a `.gif` or an oversized file (should be rejected).
+6. Change profile/appearance/SEO → reload the public site in a private window.
+7. Trigger password recovery and set a new password.
+8. Sign out, then open `/admin/` directly (you should see only the login screen).
+9. Test the mobile layout at ~390 px width.
+10. Enable OS reduced-motion and confirm animations are skipped.
 
 ---
 
-## 7. Accessibility & performance notes
+## 9. Accessibility & performance notes
 
-- Semantic landmarks, labelled controls, `aria-*` state on switches/tabs/dialogs, visible focus.
+- Semantic landmarks, labelled controls, `aria-*` state on switches/tabs/dialogs, visible focus, skip-to-content.
 - `prefers-reduced-motion` honoured on both the site and the admin.
-- Panels render lazily; search builds them once on demand.
+- Supabase SDK is loaded lazily and pinned; if it fails, the site keeps its fallback content.
+- Panels render lazily; the public page renders local content first, then re-renders once remote data arrives (no blank first paint).
 - The service worker is **network-first** so updates always win over a stale cache.
 - Renders use `textContent`, keeping user content XSS-safe.

@@ -444,6 +444,67 @@
   }
 
   /* ----------------------------------------------------------
+     LIVE CMS HYDRATION (Supabase)
+     The page always renders local/default content first, so it is
+     never blank. When Supabase is configured we then fetch the
+     published content and re-render in place. On any failure the
+     fallback simply stays on screen.
+     ---------------------------------------------------------- */
+  function syncPill(text, kind) {
+    var node = document.querySelector('.cms-sync');
+    if (!node) {
+      node = document.createElement('div');
+      node.className = 'cms-sync';
+      node.setAttribute('role', 'status');
+      node.setAttribute('aria-live', 'polite');
+      document.body.appendChild(node);
+    }
+    node.hidden = false;
+    node.dataset.state = kind || 'loading';
+    node.textContent = text;
+    return node;
+  }
+
+  function removeSyncPill(node, delay) {
+    if (!node) return;
+    setTimeout(function () {
+      if (node.parentNode) node.parentNode.removeChild(node);
+    }, delay || 0);
+  }
+
+  function hydrateRemote() {
+    var cms = window.MahinCMS;
+    if (!cms || typeof cms.fetchPublicConfig !== 'function') return Promise.resolve(null);
+    if (typeof cms.isConfigured === 'function' && !cms.isConfigured()) return Promise.resolve(null);
+
+    var reduced = isReduced();
+    syncPill('Loading live content…', 'loading');
+    document.documentElement.setAttribute('data-cms-loading', '1');
+
+    return cms.fetchPublicConfig(C.load()).then(function (res) {
+      if (res && res.source === 'remote') {
+        render(res.config, { remote: true });
+        syncPill('Live content loaded', 'ok');
+      } else {
+        syncPill('Showing offline content', 'fallback');
+      }
+      if (res && res.errors && res.errors.length) {
+        console.warn('[mahin:cms]', res.errors.join(' | '));
+      }
+      return res;
+    }).catch(function (err) {
+      console.warn('[mahin:cms]', err);
+      syncPill('Showing offline content', 'fallback');
+      return null;
+    }).then(function (res) {
+      document.documentElement.removeAttribute('data-cms-loading');
+      removeSyncPill(document.querySelector('.cms-sync'), reduced ? 900 : 2200);
+      window.__mahinCmsSettled = true;
+      return res;
+    });
+  }
+
+  /* ----------------------------------------------------------
      PREVIEW MESSAGING
      ---------------------------------------------------------- */
   function listenForPreview() {
@@ -473,12 +534,16 @@
     }
     render(config || C.load(), { preview: isPreviewWindow });
     listenForPreview();
+    // The admin live-preview iframe must show the admin's config, not the
+    // published one — otherwise it would fight the postMessage updates.
+    if (!isPreviewWindow) hydrateRemote();
   }
 
   window.MahinRender = {
     render: render,
     current: function () { return currentConfig; },
-    reload: function () { return render(C.load()); }
+    reload: function () { return render(C.load()); },
+    hydrateRemote: hydrateRemote
   };
 
   if (document.readyState === 'loading') {

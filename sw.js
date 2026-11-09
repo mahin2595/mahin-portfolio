@@ -1,16 +1,22 @@
 // Service Worker for the Mahin portfolio PWA
 // NOTE: bump CACHE_NAME whenever HTML/CSS/JS changes so clients drop stale assets.
-const CACHE_NAME = 'mahin-portfolio-v4';
+const CACHE_NAME = 'mahin-portfolio-v5';
 const ASSETS = [
     './',
     './index.html',
     './admin.html',
+    './admin/',
     './style.css',
     './admin.css',
+    './admin/cms.css',
     './config.js',
+    './supabase.config.js',
+    './supabase-client.js',
+    './cms.js',
     './render.js',
     './script.js',
     './admin.js',
+    './admin/cms.js',
     './manifest.json'
 ];
 

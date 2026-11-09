@@ -36,8 +36,8 @@
     {
       "name": "Admin panel",
       "short_name": "Admin",
-      "description": "Edit the portfolio in this browser",
-      "url": "./admin.html",
+      "description": "Manage portfolio content in Supabase",
+      "url": "./admin/",
       "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙</text></svg>", "sizes": "96x96" }]
     }
   ]

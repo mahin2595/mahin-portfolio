@@ -649,7 +649,7 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 // LIVE CONFIG REFRESH (used by admin preview)
 // ========================================
 
-window.__mahinApplyRuntimeConfig = function (config) {
+window.__mahinApplyRuntimeConfig = function (config, opts) {
     if (!config) return;
     const anim = Object.assign({}, DEFAULT_ANIM, config.animations || {});
 
@@ -672,6 +672,13 @@ window.__mahinApplyRuntimeConfig = function (config) {
     }
 
     if (anim.magnetic !== false) initMagneticButtons();
+
+    // Content was just re-rendered (live preview or remote CMS hydration):
+    // re-attach the observers to the fresh nodes so counters/reveals work.
+    if (opts && (opts.remote || opts.preview)) {
+        try { initScrollReveal(); } catch (e) { /* non-fatal */ }
+        try { initCounters(); } catch (e) { /* non-fatal */ }
+    }
 };
 
 // ========================================
