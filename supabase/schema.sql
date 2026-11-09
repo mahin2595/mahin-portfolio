@@ -232,6 +232,19 @@ insert into storage.buckets (id, name, public)
 values ('portfolio-media', 'portfolio-media', true)
 on conflict (id) do update set public = true;
 
+-- Storage-service visibility fix (REQUIRED, verified against a live project):
+-- on current Supabase projects RLS is enabled on storage.buckets with NO
+-- policies, and the supabase_storage_admin role has NO grants on it. Without
+-- the grant + read policy below, the Storage API cannot see the bucket even
+-- though the row exists: bucket lists come back empty and every upload 404s
+-- with "Bucket not found". Safe on older projects too — grants and policies
+-- already in place are simply recreated unchanged.
+grant usage on schema storage to supabase_storage_admin;
+grant select, insert, update, delete on storage.buckets to supabase_storage_admin;
+drop policy if exists "storage service read buckets" on storage.buckets;
+create policy "storage service read buckets" on storage.buckets
+  for select using (true);
+
 -- Public read of every object in the bucket.
 drop policy if exists "public read portfolio media" on storage.objects;
 create policy "public read portfolio media" on storage.objects

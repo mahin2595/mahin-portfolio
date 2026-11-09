@@ -59,6 +59,10 @@ Since `/admin/` is a real directory with its own `index.html`, **browser refresh
 
 In the Supabase dashboard open **SQL Editor** and run, in order:
 
+> ✅ **Status on the machine where this repo was developed: already done.**
+> Both files were executed on this project via the Management API (see §3.5).
+> The instructions below are for a fresh project or a reset.
+
 1. `supabase/schema.sql` — creates/repairs the four tables (`projects`, `skills`, `social_links`, `site_settings`), constraints, indexes, **RLS policies** and the `portfolio-media` bucket with Storage policies. Safe to re-run.
 2. `supabase/seed.sql` *(optional)* — inserts a few starter projects and skill chips only when the tables are still empty.
 
@@ -110,22 +114,26 @@ The page itself degrades gracefully: if a table is missing, the public site keep
 
 ### 3.5 Live verification of the configured project (2025-11)
 
-Probed `https://ijxiygxqdtleurspiacs.supabase.co` with the publishable key over the
-public REST/Auth/Storage endpoints:
+> ✅ **Status: fully provisioned.** The database side of this repo's project
+> (`ijxiygxqdtleurspiacs.supabase.co`) was set up and verified live via the Supabase
+> Management API plus the public REST/Auth/Storage endpoints. Only the admin account
+> (step 3.2) remains for you to create.
 
 | Check | Result |
 |-------|--------|
-| Publishable key validity | ✅ valid — Auth health `v2.197.0`, `/auth/v1/settings` and the password-grant endpoint all answered |
-| Email/password login path | ✅ live (returns `invalid_credentials` for a bad login — the endpoint works) |
-| Tables `projects`, `skills`, `social_links`, `site_settings` | ❌ **not present** — PostgREST returns `PGRST205 "Could not find the table"` in the `public` schema (and in `core`/`app`/`cms`) |
-| Storage bucket `portfolio-media` | ❌ **not found** — `GET /storage/v1/bucket/portfolio-media` → 404 `NoSuchBucket` |
-| Public sign-ups | ⚠️ **currently ENABLED** — `disable_signup: false` |
+| Tables `projects`, `skills`, `social_links`, `site_settings` | ✅ created by running `supabase/schema.sql` — all four answer PostgREST queries |
+| RLS policies (8) — public reads published/visible content only, authenticated full access | ✅ verified: anonymous SELECT returns only the 4 published projects; anonymous INSERT → `42501` "violates row-level security policy" |
+| Seed content (`supabase/seed.sql`) | ✅ 4 projects, 8 skills, 2 social links, 5 `site_settings` rows |
+| Storage bucket `portfolio-media` | ✅ exists **and is visible to the Storage API** — this required a grant + read policy on `storage.buckets` (see the fix note in `schema.sql` §7); without it the API ignores the row and every upload 404s |
+| Anonymous upload to the bucket | ✅ blocked by RLS (`403 AccessDenied`) |
+| Public sign-ups | ✅ **disabled** (`disable_signup: true`, set via the Management API) |
 
-**What to do (still required on your side):**
-1. Supabase → **SQL Editor** → run `supabase/schema.sql`, then `supabase/seed.sql` (optional). This creates the four tables, RLS policies and the `portfolio-media` bucket. If you believe the tables *are* set up, double-check you're looking at this project (`ijxiygxqdtleurspiacs`) — the probes found no tables in it.
-2. Supabase → **Authentication → Sign In / Up** → turn **OFF "Allow new users to sign up"** (it is currently on; leaving it on lets anyone register, though RLS still blocks any writes their account could make).
-3. Create your admin under **Authentication → Users → Add user** if you haven't already.
-4. Re-open `/admin/`, sign in, and press **Run live check** — all rows should turn green.
+**What remains on your side (one step):**
+1. **Authentication → Users → Add user** — create your admin email + password (sign-ups are off, so the dashboard's add-user path is the only way to create accounts).
+2. Re-open `/admin/`, sign in, press **Run live check** — every row is green. Then work through the §8 manual checklist once to exercise login, CRUD and uploads as your admin.
+
+> If you ever reset the project and re-run both SQL files, `schema.sql` now recreates
+> the `storage.buckets` grant/policy automatically, so the bucket stays visible.
 
 ---
 
@@ -247,7 +255,7 @@ npm test
 ### What is *not* verified here
 The automated suite runs against a **spec-accurate mock client** that mirrors supabase-js v2 (`from/select/insert/update/delete/eq/order/single`, `storage.from().upload/getPublicUrl/remove`, `auth.*`) — no network, no real project.
 
-Beyond the suite, the **real project was probed live** (see §3.5): the publishable key is valid and the Auth endpoints respond. Still **not** verified live (blocked by the missing tables described in §3.5): signing in as *your* admin user, real CRUD round-trips against Postgres, real uploads to `portfolio-media`, and RLS enforcement during those actions. Run schema.sql/seed.sql first (and disable sign-ups), then work through the checklist below — the dashboard's **Run live check** shows green once the database side is ready.
+Beyond the suite, the **real project was provisioned and probed live** (see §3.5): schema + seed applied, all RLS policies verified (anonymous reads limited to published/visible rows, anonymous writes rejected), the storage bucket visible and anonymous uploads blocked, and public sign-ups disabled. Still **not** verified live (the one dashboard step left — creating your admin user under Authentication → Users): signing in as *that* user, CRUD round-trips and uploads using that session. Create the admin, then work through the checklist below; the dashboard's **Run live check** shows everything green. The author will not claim those last end-to-end actions are tested until the admin account exists and is exercised.
 
 ### Manual checklist against your real project
 1. Sign in at `/admin/`; refresh the page — you stay signed in.
