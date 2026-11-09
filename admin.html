@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" data-admin-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080a10">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Mahin Studio — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="config.js?v=2"></script>
+  <script>
+    // Match the public saved theme early so colour swatches feel accurate.
+    try { window.MahinConfig.applyTheme(window.MahinConfig.load()); } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="admin.css?v=2">
+</head>
+<body class="admin-body">
+  <a class="a-skip" href="#adminMain">Skip to content</a>
+  <div class="a-ambient" aria-hidden="true"></div>
+
+  <header class="a-topbar">
+    <button class="a-icon-btn a-drawer-btn" id="drawerBtn" type="button"
+            aria-label="Open navigation" aria-expanded="false" aria-controls="aSidebar">☰</button>
+
+    <a class="a-brand" href="index.html" title="Back to the public site">
+      <span class="a-brand-mark" aria-hidden="true">M</span>
+      <span class="a-brand-text">MAHIN <em>STUDIO</em></span>
+    </a>
+
+    <div class="a-search-wrap">
+      <label class="sr-only" for="adminSearch">Search settings</label>
+      <svg class="a-search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="adminSearch" class="a-search" type="search" placeholder="Search settings…" autocomplete="off" aria-describedby="searchHint">
+      <span id="searchHint" class="sr-only">Type to search every setting. Results appear below.</span>
+      <div class="a-search-results" id="searchResults" hidden></div>
+    </div>
+
+    <div class="a-status" id="saveStatus" role="status" aria-live="polite" data-state="saved">
+      <span class="a-status-dot" aria-hidden="true"></span>
+      <span id="saveStatusText">Saved</span>
+    </div>
+
+    <div class="a-actions">
+      <a class="a-btn ghost a-hide-sm" href="index.html" target="_blank" rel="noopener">View site ↗</a>
+      <button class="a-btn ghost a-hide-sm" id="exportTopBtn" type="button">Export</button>
+      <button class="a-btn primary" id="saveBtn" type="button">Save changes</button>
+      <button class="a-icon-btn" id="adminThemeBtn" type="button" aria-label="Toggle admin light/dark appearance" title="Toggle admin appearance">☀</button>
+    </div>
+  </header>
+
+  <div class="a-shell">
+    <aside class="a-sidebar" id="aSidebar" aria-label="Admin sections">
+      <nav class="a-nav" id="adminNav"></nav>
+      <div class="a-sidebar-foot">
+        <div class="a-sidebar-note">
+          <strong>Local admin</strong>
+          <p>Data lives in <em>this browser</em>. Export regularly. Not real security.</p>
+        </div>
+        <a class="a-side-link" href="index.html">← Back to portfolio</a>
+      </div>
+    </aside>
+
+    <div class="a-scrim" id="aScrim" hidden></div>
+
+    <main class="a-main" id="adminMain" tabindex="-1">
+      <div id="panels"></div>
+    </main>
+  </div>
+
+  <div class="a-toasts" id="toasts" role="region" aria-label="Notifications" aria-live="polite"></div>
+
+  <div class="a-modal-root" id="modalRoot" hidden>
+    <div class="a-modal-backdrop" data-close-modal></div>
+    <div class="a-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalBody">
+      <h2 id="modalTitle">Confirm</h2>
+      <p id="modalBody"></p>
+      <div class="a-modal-actions">
+        <button class="a-btn ghost" type="button" data-close-modal>Cancel</button>
+        <button class="a-btn danger" type="button" id="modalConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js?v=2"></script>
+</body>
+</html>

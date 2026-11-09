@@ -50,6 +50,30 @@ const state = {
 };
 
 // ========================================
+// CONFIG-AWARE SETTINGS
+// ========================================
+
+const DEFAULT_ANIM = {
+    scrollReveal: true, hoverEffects: true, pageTransitions: true,
+    scrollProgress: true, loadingAnimation: true, parallax: true,
+    magnetic: true, cursor: true, counters: true, reducedMotion: 'system'
+};
+
+function getSettings() {
+    let cfg = null;
+    try {
+        if (window.MahinRender && typeof window.MahinRender.current === 'function') cfg = window.MahinRender.current();
+        if (!cfg && window.MahinConfig) cfg = window.MahinConfig.load();
+    } catch (e) { /* config unavailable — fall back to defaults */ }
+    return Object.assign({}, DEFAULT_ANIM, (cfg && cfg.animations) || {});
+}
+
+function prefersReduced() {
+    const forced = document.documentElement.getAttribute('data-reduced-motion') === 'force-off';
+    return forced || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+// ========================================
 // INITIALIZATION
 // ========================================
 
@@ -90,14 +114,19 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function ensureContentVisible() {
-    // Reveal everything if the observer API is missing OR the reveal module
-    // failed to initialise. Content must never be left permanently hidden.
-    if (!('IntersectionObserver' in window) || !window.__mahinRevealReady) {
+    // Reveal everything if the observer API is missing, the reveal module
+    // failed to initialise, scroll-reveal is switched off, or the visitor
+    // prefers reduced motion. Content must never be left permanently hidden.
+    const anim = getSettings();
+    if (!('IntersectionObserver' in window) || !window.__mahinRevealReady ||
+        anim.scrollReveal === false || prefersReduced()) {
         $$('.reveal,.build-rule').forEach(el => el.classList.add('visible'));
+    }
+    if (prefersReduced()) {
+        document.body.classList.add('reduced-motion');
         $$('.stat strong[data-count]').forEach(el => {
             el.textContent = (el.dataset.count || '') + '+';
         });
-        document.body.classList.add('reduced-motion');
     }
 }
 
@@ -128,7 +157,7 @@ let cursorVisible = true;
 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
 function initCursor() {
-    if (isTouchDevice || state.reducedMotion) {
+    if (isTouchDevice || state.reducedMotion || getSettings().cursor === false) {
         if (cursor) cursor.style.display = 'none';
         if (cursorFollower) cursorFollower.style.display = 'none';
         document.body.style.cursor = 'auto';
@@ -257,6 +286,12 @@ function closeNav() {
 const progressBar = $('#progressBar');
 
 function initProgressBar() {
+    if (getSettings().scrollProgress === false) {
+        if (progressBar) progressBar.style.width = '0%';
+        const wrapEl = $('.progress');
+        if (wrapEl) wrapEl.style.display = 'none';
+        return;
+    }
     window.addEventListener('scroll', throttle(() => {
         const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
         const progress = maxScroll > 0 ? window.scrollY / maxScroll * 100 : 0;
@@ -276,7 +311,12 @@ function initProgressBar() {
 function initHeroBuild() {
     const heroSection = $('.hero-build');
     if (!heroSection) return;
-    
+
+    if (getSettings().loadingAnimation === false) {
+        heroSection.classList.add('built');
+        return;
+    }
+
     // Already triggered in DOMContentLoaded, but ensure it runs
     setTimeout(() => {
         heroSection.classList.add('built');
@@ -288,7 +328,7 @@ function initHeroBuild() {
 // ========================================
 
 function initScrollReveal() {
-    if (!('IntersectionObserver' in window)) {
+    if (!('IntersectionObserver' in window) || getSettings().scrollReveal === false || prefersReduced()) {
         $$('.reveal,.build-rule').forEach(el => el.classList.add('visible'));
         window.__mahinRevealReady = true;
         return;
@@ -317,7 +357,7 @@ function initScrollReveal() {
 // ========================================
 
 function initCounters() {
-    if (!('IntersectionObserver' in window)) {
+    if (!('IntersectionObserver' in window) || getSettings().counters === false || prefersReduced()) {
         $$('.stat strong[data-count]').forEach(el => {
             el.textContent = (el.dataset.count || '') + '+';
         });
@@ -360,6 +400,8 @@ function animateCounter(el, target) {
 // ========================================
 
 function initProjectFilter() {
+    // render.js owns filter clicks when the config-driven grid is active.
+    if (window.__mahinRenderOwnsFilters) return;
     const filterBtns = $$('.filter-btn');
     const projects = $$('.project');
 
@@ -457,7 +499,7 @@ function validateForm(data) {
 // ========================================
 
 function initParallax() {
-    if (state.reducedMotion || state.isMobile) return;
+    if (state.reducedMotion || state.isMobile || getSettings().parallax === false) return;
 
     const heroOrb = $('.hero-orb');
     
@@ -474,7 +516,10 @@ function initParallax() {
 // ========================================
 
 function initMagneticButtons() {
+    if (getSettings().magnetic === false) return;
     $$('.magnetic').forEach(btn => {
+        if (btn.dataset.magnetBound === 'true') return;
+        btn.dataset.magnetBound = 'true';
         btn.addEventListener('mousemove', (e) => {
             const rect = btn.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -530,30 +575,30 @@ function initActiveNavHighlight() {
 // REDUCED MOTION CHECK
 // ========================================
 
-function checkReducedMotion() {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (prefersReducedMotion.matches) {
+function applyReducedMotionState(isReduced) {
+    const heroSection = $('.hero-build');
+    if (isReduced) {
         document.body.classList.add('reduced-motion');
-        const heroSection = $('.hero-build');
         if (heroSection) heroSection.classList.add('built');
         $$('.reveal,.build-rule').forEach(el => el.classList.add('visible'));
         $$('.stat strong[data-count]').forEach(el => {
-            el.textContent = el.dataset.count + '+';
+            el.textContent = (el.dataset.count || '') + '+';
         });
+    } else {
+        document.body.classList.remove('reduced-motion');
     }
+}
 
-    // Listen for changes
-    prefersReducedMotion.addEventListener('change', (e) => {
-        if (e.matches) {
-            document.body.classList.add('reduced-motion');
-            $$('.reveal,.build-rule').forEach(el => el.classList.add('visible'));
-            $$('.stat strong[data-count]').forEach(el => {
-                el.textContent = el.dataset.count + '+';
-            });
-        } else {
-            document.body.classList.remove('reduced-motion');
-        }
-    });
+function checkReducedMotion() {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => applyReducedMotionState(
+        mq.matches || document.documentElement.getAttribute('data-reduced-motion') === 'force-off'
+    );
+    update();
+
+    // Listen for changes (with legacy Safari fallback)
+    if (mq.addEventListener) mq.addEventListener('change', update);
+    else if (mq.addListener) mq.addListener(update);
 }
 
 // ========================================
@@ -599,6 +644,35 @@ function registerServiceWorker() {
 
 const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+// ========================================
+// LIVE CONFIG REFRESH (used by admin preview)
+// ========================================
+
+window.__mahinApplyRuntimeConfig = function (config) {
+    if (!config) return;
+    const anim = Object.assign({}, DEFAULT_ANIM, config.animations || {});
+
+    const progressWrap = $('.progress');
+    if (progressWrap) progressWrap.style.display = anim.scrollProgress === false ? 'none' : '';
+
+    if (anim.scrollReveal === false || prefersReduced()) {
+        $$('.reveal,.build-rule').forEach(el => el.classList.add('visible'));
+    }
+
+    const heroSection = $('.hero-build');
+    if (heroSection && (anim.loadingAnimation === false || prefersReduced())) {
+        heroSection.classList.add('built');
+    }
+
+    if (anim.counters === false || prefersReduced()) {
+        $$('.stat strong[data-count]').forEach(el => {
+            el.textContent = (el.dataset.count || '') + '+';
+        });
+    }
+
+    if (anim.magnetic !== false) initMagneticButtons();
+};
 
 // ========================================
 // KEYBOARD NAVIGATION

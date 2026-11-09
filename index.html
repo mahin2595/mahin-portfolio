@@ -10,12 +10,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#080a10">
   <!-- Mark that JS is available BEFORE first paint. Scroll-reveal styles only
        hide content when this class is present, so a JS failure can never
        leave the page blank. -->
   <script>document.documentElement.classList.add('js');</script>
-  <link rel="stylesheet" href="style.css?v=3">
+  <!-- Apply the saved theme as early as possible to avoid a flash. -->
+  <script src="config.js?v=5"></script>
+  <script>
+    try { window.MahinConfig.applyAll(window.MahinConfig.load()); } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="style.css?v=5">
   <noscript>
     <style>
       .reveal { opacity: 1 !important; transform: none !important; filter: none !important; }
@@ -35,7 +39,7 @@
   <!-- Navigation -->
   <header class="nav" id="nav">
     <div class="nav-inner">
-      <a class="brand" href="#home" aria-label="Mahin home">MAHIN<span>.</span></a>
+      <a class="brand" href="#home" aria-label="Home">MAHIN<span>.</span></a>
       <nav class="nav-links" id="navLinks" aria-label="Main navigation">
         <a href="#about">ABOUT</a>
         <a href="#work">WORK</a>
@@ -64,10 +68,10 @@
         <div class="build-line build-line-2" aria-hidden="true"></div>
         <div class="build-line build-line-3" aria-hidden="true"></div>
 
-        <div class="eyebrow reveal">CREATIVE DESIGNER / VIDEO EDITOR</div>
-        <div class="availability reveal" style="margin-top:22px"><span class="dot"></span> OPEN TO CREATIVE PROJECTS</div>
+        <div class="eyebrow reveal" data-cfg="heroEyebrow">CREATIVE DESIGNER / VIDEO EDITOR</div>
+        <div class="availability reveal" style="margin-top:22px" data-cfg="availability"><span class="dot"></span> OPEN TO CREATIVE PROJECTS</div>
         <h1 class="reveal">MAKING<br>IDEAS FEEL<br><span class="gradient">UNREAL.</span><span class="typing-caret"></span></h1>
-        <p class="hero-sub reveal">Hey, I'm Mahin. I create visual identities, cinematic edits, and digital experiences that turn a good idea into something people remember.</p>
+        <p class="hero-sub reveal" data-cfg="heroIntro">Hey, I'm Mahin. I create visual identities, cinematic edits, and digital experiences that turn a good idea into something people remember.</p>
         
         <div class="hero-actions reveal">
           <a class="btn primary magnetic" href="#work">Explore my work <span class="arrow">↘</span></a>
@@ -75,7 +79,7 @@
         </div>
 
         <!-- Hero stats with counter animation -->
-        <div class="hero-stats reveal">
+        <div class="hero-stats reveal" data-cfg="heroStats">
           <div class="stat"><strong data-count="3">0</strong><span>Years Creating</span></div>
           <div class="stat"><strong data-count="50">0</strong><span>Projects Delivered</span></div>
           <div class="stat"><strong data-count="12">0</strong><span>Happy Clients</span></div>
@@ -89,7 +93,7 @@
     <!-- ABOUT SECTION -->
     <section id="about">
       <div class="wrap">
-        <div class="section-head reveal"><div><div class="eyebrow">01 / THE CREATIVE</div><h2>A mind for<br>the details.</h2></div><p class="section-note">Thoughtful visuals. Intentional motion. A little bit of magic in the details.</p></div>
+        <div class="section-head reveal"><div><div class="eyebrow">01 / THE CREATIVE</div><h2>A mind for<br>the details.</h2></div><p class="section-note" data-cfg="noteAbout">Thoughtful visuals. Intentional motion. A little bit of magic in the details.</p></div>
         <div class="build-rule reveal"></div>
         
         <div class="about-grid">
@@ -106,12 +110,13 @@
               <div class="card-edge left"></div>
             </div>
             
-            <p class="about-big">I'm <em>Mahin</em> — a creative designer and video editor focused on visuals that make people <em>feel something.</em></p>
-            <p class="about-detail">From shaping a visual identity to editing a story frame by frame, I enjoy turning raw ideas into polished creative work. My approach combines clean design, strong composition, rhythm, and a constant curiosity to try something new.</p>
-            <p class="about-detail">This is your space to tell your story. Add your background, creative philosophy, and the kind of clients or projects you want to attract.</p>
+            <p class="about-big" data-cfg="aboutLead">I'm <em>Mahin</em> — a creative designer and video editor focused on visuals that make people <em>feel something.</em></p>
+            <p class="about-detail" data-cfg="aboutBody1">From shaping a visual identity to editing a story frame by frame, I enjoy turning raw ideas into polished creative work. My approach combines clean design, strong composition, rhythm, and a constant curiosity to try something new.</p>
+            <p class="about-detail" data-cfg="aboutBody2">This is your space to tell your story. Add your background, creative philosophy, and the kind of clients or projects you want to attract.</p>
           </div>
           
           <div class="glass-panel about-side reveal">
+            <figure class="avatar-wrap" data-cfg="avatar" hidden></figure>
             <div>
               <div class="mono">CREATIVE TOOLKIT</div>
               <div class="skills" id="skillsContainer">
@@ -127,7 +132,7 @@
             </div>
             <div>
               <div class="mono">A FEW NUMBERS</div>
-              <div class="stat-grid">
+              <div class="stat-grid" data-cfg="aboutStats">
                 <div class="stat"><strong data-count="3">0</strong><span>Years Creating</span></div>
                 <div class="stat"><strong data-count="50">0</strong><span>Projects Delivered</span></div>
                 <div class="stat"><strong data-count="12">0</strong><span>Happy Clients</span></div>
@@ -142,11 +147,11 @@
     <!-- WORK SECTION -->
     <section id="work">
       <div class="wrap">
-        <div class="section-head reveal"><div><div class="eyebrow">02 / SELECTED WORK</div><h2>Made with<br>intention.</h2></div><p class="section-note">A preview of the kind of creative work that belongs here. Replace these concept tiles with your real project images and links.</p></div>
+        <div class="section-head reveal"><div><div class="eyebrow">02 / SELECTED WORK</div><h2>Made with<br>intention.</h2></div><p class="section-note" data-cfg="noteWork">A preview of the kind of creative work that belongs here. Replace these concept tiles with your real project images and links.</p></div>
         <div class="build-rule reveal"></div>
         
         <div class="work-header reveal">
-          <div class="filter-btns" role="tablist" aria-label="Project filters">
+          <div class="filter-btns" role="tablist" aria-label="Project filters" data-cfg="filters">
             <button class="filter-btn active magnetic" data-filter="all" role="tab" aria-selected="true">All</button>
             <button class="filter-btn magnetic" data-filter="design" role="tab" aria-selected="false">Design</button>
             <button class="filter-btn magnetic" data-filter="video" role="tab" aria-selected="false">Video</button>
@@ -214,10 +219,10 @@
     <!-- JOURNEY/PROCESS SECTION -->
     <section id="journey">
       <div class="wrap">
-        <div class="section-head reveal"><div><div class="eyebrow">03 / THE PROCESS</div><h2>Always<br>in progress.</h2></div><p class="section-note">A simple creative workflow. Edit these steps to reflect how you actually work.</p></div>
+        <div class="section-head reveal"><div><div class="eyebrow">03 / THE PROCESS</div><h2>Always<br>in progress.</h2></div><p class="section-note" data-cfg="noteJourney">A simple creative workflow. Edit these steps to reflect how you actually work.</p></div>
         <div class="build-rule reveal"></div>
         
-        <div class="glass-panel timeline">
+        <div class="glass-panel timeline" data-cfg="process">
           <div class="timeline-item reveal">
             <div class="timeline-date">01 / DISCOVER</div>
             <div>
@@ -309,10 +314,11 @@
           
           <div class="contact-bottom">
             <div>
-              <p class="section-note">Have a video to bring to life, a visual identity to build, or a creative idea to explore? Let's talk.</p>
-              <a class="contact-email" href="mailto:hello@mahin.design">hello@mahin.design ↗</a>
+              <p class="section-note" data-cfg="noteContact">Have a video to bring to life, a visual identity to build, or a creative idea to explore? Let's talk.</p>
+              <a class="contact-email" href="mailto:hello@mahin.design" data-cfg="emailLink" data-cfg-text="true">hello@mahin.design ↗</a>
+              <div class="social-row" data-cfg="social"></div>
             </div>
-            <a class="btn primary magnetic" href="mailto:hello@mahin.design">Start a project <span class="arrow">↗</span></a>
+            <a class="btn primary magnetic" href="mailto:hello@mahin.design" data-cfg="emailLink">Start a project <span class="arrow">↗</span></a>
           </div>
         </div>
       </div>
@@ -321,13 +327,16 @@
 
   <footer>
     <div class="wrap">
-      <span>© <span id="year"></span> MAHIN — MADE WITH INTENTION</span>
+      <span>© <span id="year"></span> <span data-cfg="footerText">MAHIN — MADE WITH INTENTION</span></span>
       <a href="#home">BACK TO TOP ↑</a>
-      <span>DESIGN · EDIT · REPEAT</span>
+      <span data-cfg="footerTag">DESIGN · EDIT · REPEAT</span>
     </div>
   </footer>
 
-  <script src="script.js?v=3"></script>
+  <!-- Content is rendered from the shared configuration in config.js -->
+  <script src="render.js?v=5"></script>
+  <script src="script.js?v=5"></script>
+  <a class="admin-fab" href="admin.html" aria-label="Open admin panel" title="Admin panel">⚙ Admin</a>
   <script>
     // Safety net: if the external script never initialises, un-hide content.
     window.addEventListener('load', function () {

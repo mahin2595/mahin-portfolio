@@ -32,6 +32,13 @@
       "description": "Get in touch",
       "url": "./#contact",
       "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📧</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "Admin panel",
+      "short_name": "Admin",
+      "description": "Edit the portfolio in this browser",
+      "url": "./admin.html",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙</text></svg>", "sizes": "96x96" }]
     }
   ]
 }

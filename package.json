@@ -1,0 +1,13 @@
+{
+  "name": "mahin-portfolio",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Mahin Studio portfolio with a local admin control panel. No build step; tests use Node's built-in test runner with jsdom.",
+  "scripts": {
+    "serve": "python3 -m http.server 8000",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "^31.0.0"
+  }
+}
